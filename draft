@@ -1,0 +1,299 @@
+        // ADDRESSES WHEN CONNECTING FROM THE OTHER MACHINE
+        // AHA MAYBE USEFUL NOTE, SOMETHING IS NOT WORKING WHEN THE DEFAULT 8080 PORT IS SET, THEN I CANNOT CONNECT EITHER ON THE TEST ENDPOINT NOR TO THE SOCKJS
+        // THAT'S WHY I CHANGED IT TO 8092
+        // const sockJS = new SockJS('http://192.168.50.68:8092/websocket');
+        // const webSocket = new WebSocket("ws://192.168.50.68:8092/websocket");
+        // test endpoint: 192.168.50.68:8092/test (worked on laptop and phone!_
+
+        // const sockJS = new SockJS('http://localhost:8092/websocket');
+        // // const webSocket = new WebSocket("ws://localhost:8080/websocket");
+        //
+        // sockJS.onopen = () => {
+        //     console.log('WebSocket connected');
+        // };
+        //
+        // sockJS.onmessage = (event: any) => {
+        //     setReceivedMessage(event.data);
+        // };
+        //
+        // sockJS.onclose = () => {
+        //     console.log('WebSocket closed');
+        // };
+        // //
+        // setSocket(sockJS);
+        //
+        // return () => {
+        //     sockJS.close();
+        // };
+
+
+import React, {useEffect, useState} from 'react';
+import './App.css';
+// const TcpSocket  = require('react-native-tcp-socket');
+// import TcpSocket  from 'react-native-tcp-socket';
+// import Socket from 'react-native-tcp-socket';
+//
+// import {io} from "socket.io-client";
+
+//const net = require('net');
+
+// import net from 'net';
+
+import io from 'socket.io-client';
+
+const socket = io('http://localhost:8888'); // Replace with your server address
+
+
+// import TcpSocket from 'net';
+//
+// import TcpSocket, {createConnection} from "react-native-tcp-socket";
+
+// declare module 'net' {
+//     import TcpSockets from 'react-native-tcp-socket';
+//     export = TcpSockets;
+// }
+
+//import net from 'net';
+
+// function App() {
+//     const options = {
+//         port: 9999,
+//         host: '127.0.0.1',
+//         localAddress: '127.0.0.1',
+//         reuseAddress: true,
+//         // localPort: 20000,
+//         // interface: "wifi",
+//     };
+//
+//
+//
+//     useEffect(() => {
+//         // console.log("I am inside useEffect!")
+//         //
+//         // const client = TcpSocket.createConnection(options, () => {
+//         //     client.write("Hello!");
+//         // })
+//
+//         // const client = TcpSocket.createConnection(options, () => {
+//         //     // Write on the socket
+//         //     client.write('Hello server!');
+//         //
+//         //     // Close socket
+//         //     client.destroy();
+//         // });
+//         //
+//         // client.on('data', function(data) {
+//         //     console.log('message was received', data);
+//         // });
+//         //
+//         // client.on('error', function(error) {
+//         //     console.log(error);
+//         // });
+//         //
+//         // client.on('close', function(){
+//         //     console.log('Connection closed!');
+//         // });
+//
+//         // const socket = io("http://localhost:8888");
+//         //
+//         // console.log("I am here")
+//         // socket.emit("Hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
+//         // console.log("And now here!!")
+//         //
+//         // socket.on('chat message', (message) => {
+//         //     console.log("message: " + message);
+//         // });
+//         // io.on("connect", () => {
+//         //
+//         // })
+//
+//         // socket.on("connection", () => {
+//         //     console.log("Hello !!!")
+//         //     socket.emit("hello", "hehe");
+//         // })
+//         //socket.connect();
+//         // socket.sendBuffer("sdadsad")
+//
+//
+//         // const test = TcpSocket.connect(options, () => {
+//         //
+//         // });
+//
+//         // const test2 = Socket.createConnection(options, () => {
+//         //
+//         // });
+//
+//
+//         // net.createConnection(options, () => {
+//         //
+//         // });
+//
+//         // Create a new TCP client
+//         const client = new net.Socket();
+//
+//         // Connect to the server
+//         client.connect(8080, 'localhost', () => {
+//             console.log('Connected to server');
+//
+//             // Send data to the server
+//             client.write('Hello, server!');
+//         });
+//
+//         // Handle data received from the server
+//         client.on('data', (data) => {
+//             console.log('Received data from server:', data.toString());
+//         });
+//
+//         // Handle errors and close events
+//         client.on('error', (error) => {
+//             console.error('Error:', error);
+//             client.destroy(); // Close the connection on error
+//         });
+//
+//         client.on('close', () => {
+//             console.log('Connection closed');
+//         });
+//
+//         // Clean up the client connection when the component unmounts
+//         return () => {
+//             client.end(); // Close the connection when the component is unmounted
+//         };
+//
+//     }, []);
+//
+//     return <><h1>Hehe</h1></>
+// }
+
+function App() {
+    const [message, setMessage] = useState('');
+    const [response, setResponse] = useState('');
+
+    useEffect(() => {
+        // Listen for 'message' events from the server
+        socket.on('message', (data) => {
+            setResponse(data);
+        });
+
+        // Clean up the socket connection when the component unmounts
+        return () => {
+            socket.disconnect();
+        };
+    }, []); // Empty dependency array ensures this effect runs once after the initial render
+
+    const sendMessage = () => {
+        // Emit 'message' event to the server
+        socket.emit('message', message);
+    };
+
+    return (
+        <div>
+            <div>
+                <input
+                    type="text"
+                    placeholder="Enter message"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                />
+                <button onClick={sendMessage}>Send</button>
+            </div>
+            <div>
+                <p>Response: {response}</p>
+            </div>
+        </div>
+    );
+}
+
+export default App;
+
+
+
+
+
+
+
+
+import {useEffect, useState} from "react";
+import SockJS from "sockjs-client";
+const App = () => {
+    const [socket, setSocket] = useState<WebSocket | null>(null);
+    const [message, setMessage] = useState('');
+    const [receivedMessage, setReceivedMessage] = useState('');
+
+    useEffect(() => {
+
+        // const option = $("#transports").find('option:selected').val();
+        // const transports = (option === 'all') ? [] : [option];
+
+        const sockJS = new SockJS('http://192.168.50.68:8092/websocket');
+
+        const webSocket = new WebSocket("ws://192.168.50.68:8092/websocket");
+
+
+            // , 'subprotocol.demo.websocket', {debug: true, transports: transports});
+
+        sockJS.onopen = () => {
+            console.log('WebSocket connected');
+        };
+
+        sockJS.onmessage = (event: any) => {
+            setReceivedMessage(event.data);
+        };
+
+        sockJS.onclose = () => {
+            console.log('WebSocket closed');
+        };
+
+        setSocket(webSocket);
+
+        return () => {
+            sockJS.close();
+        };
+    }, []);
+
+    const sendMessage = () => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(message);
+        }
+
+        // let webSocket = new SockJS('ws://localhost:8080/websocket');
+        // webSocket.onopen = function () {
+        //     // log('Client connection opened');
+        //     console.log('Subprotocol: ' + webSocket.protocol);
+        //     console.log('Extensions: ' + webSocket.extensions);
+        // };
+        // webSocket.onmessage = function (event) {
+        //     // log('Client received: ' + event.data);
+        // };
+        // webSocket.onerror = function (event) {
+        //     // log('Client error: ' + event);
+        // };
+        // webSocket.onclose = function (event) {
+        //     // log('Client connection closed: ' + event.code);
+        // };
+
+    };
+
+    return (
+        <div>
+            <h1>WebSocket Client</h1>
+            <input
+                type="text"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Enter message"
+            />
+            <button onClick={sendMessage}>Send</button>
+            <div>
+                <h2>Received Message:</h2>
+                <p>{receivedMessage}</p>
+            </div>
+        </div>
+    );
+};
+
+export default App;
+
+
+
+
+
