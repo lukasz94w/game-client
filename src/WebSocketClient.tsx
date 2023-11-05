@@ -17,26 +17,30 @@ const WebSocketClient = () => {
             setSocket(sockJS);
 
             heartbeatIntervalId = setInterval(() => {
+                const currentUnixTimestampInSeconds: number = Math.floor(new Date().getTime() / 1000);
                 sockJS.send(JSON.stringify({
-                    message: "heartbeat_iss"
+                    clientHeartbeat: currentUnixTimestampInSeconds
                 }));
             }, 30000);
 
             heartbeatCheckingId = setInterval(() => {
+                // check some flag here and if so close?
                 // show message lost connection to server and navigate to main window
                 sockJS.close();
             }, 35000);
         };
 
         sockJS.onmessage = (event: any) => {
-            if (event.data === "heartbeat_ack") {
+            let json = JSON.parse(event.data)
+
+            if (json.serverMessage) {
+                setReceivedMessage(json.serverMessage)
+            } else if (json.serverHeartbeat) {
                 console.log("Received confirmation, clearing the timer...")
                 clearInterval(heartbeatCheckingId);
-            } else if (event.data === "paired_session_is_lost") {
-                // show message paired session lost the connection
-                sockJS.close(); // and then because onclose is called automatic navigation to main window is executed?
-            } else {
-                setReceivedMessage(event.data);
+            } else if (json.serverPairedSessionDisconnected) {
+                setReceivedMessage("Your opponent has disconnected...")
+                sockJS.close();
             }
         };
 
@@ -45,6 +49,7 @@ const WebSocketClient = () => {
         }
 
         sockJS.onclose = () => {
+            // show message paired session lost the connection
             console.log("Onclose is called, I am going back to the main window...")
             clearInterval(heartbeatIntervalId);
             clearInterval(heartbeatCheckingId);
@@ -60,7 +65,9 @@ const WebSocketClient = () => {
 
     const sendMessage = () => {
         if (socket && message.trim() !== "") {
-            socket.send(JSON.stringify({message}));
+            socket.send(JSON.stringify({
+                clientMessage: message
+            }));
             setMessage("");
         }
     };
