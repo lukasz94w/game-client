@@ -3,36 +3,26 @@ import SockJS from "sockjs-client";
 import "./WebSocketClient.css";
 import {useNavigate} from "react-router-dom";
 
-
 const WebSocketClient = () => {
     const [message, setMessage] = useState('');
     const [socket, setSocket] = useState<WebSocket | null>(null);
     const [receivedMessage, setReceivedMessage] = useState('');
 
+    const LOST_CONNECTION_TO_SERVER_MSG = "Lost connection to the server.";
+    const OPPONENT_DISCONNECTED_MSG = "Opponent has disconnected.";
+
     const navigate = useNavigate();
 
     useEffect(() => {
-        let heartbeatIntervalId: NodeJS.Timer
-        let heartbeatCheckingId: NodeJS.Timer;
+        let heartbeatSendingTimerId: NodeJS.Timer
+        let heartbeatCheckingTimerId: NodeJS.Timer;
 
         const sockJS = new SockJS('http://localhost:8092/websocket');
 
         sockJS.onopen = () => {
-            console.log("Connected to WebSocket");
             setSocket(sockJS);
-
-            heartbeatIntervalId = setInterval(() => {
-                const currentUnixTimestampInSeconds: number = Math.floor(new Date().getTime() / 1000);
-                sockJS.send(JSON.stringify({
-                    clientHeartbeat: currentUnixTimestampInSeconds
-                }));
-            }, 30000);
-
-            heartbeatCheckingId = setInterval(() => {
-                // check some flag here and if so close?
-                // show message lost connection to server and navigate to main window
-                sockJS.close();
-            }, 35000);
+            heartbeatSendingTimerId = setInterval(sendHeartbeatMessage, 30000, sockJS);
+            heartbeatCheckingTimerId = setInterval(closeClientSocket, 35000, sockJS, LOST_CONNECTION_TO_SERVER_MSG);
         };
 
         sockJS.onmessage = (event: any) => {
@@ -41,11 +31,10 @@ const WebSocketClient = () => {
             if (json.serverMessage) {
                 setReceivedMessage(json.serverMessage)
             } else if (json.serverHeartbeat) {
-                console.log("Received confirmation, clearing the timer...")
-                clearInterval(heartbeatCheckingId);
+                const newHeartbeatCheckingTimerId = resetTimer(heartbeatCheckingTimerId, sockJS);
+                heartbeatCheckingTimerId = newHeartbeatCheckingTimerId;
             } else if (json.serverPairedSessionDisconnected) {
-                setReceivedMessage("Your opponent has disconnected...")
-                sockJS.close();
+                closeClientSocket(sockJS, OPPONENT_DISCONNECTED_MSG);
             }
         };
 
@@ -54,10 +43,7 @@ const WebSocketClient = () => {
         }
 
         sockJS.onclose = () => {
-            // show message paired session lost the connection
-            console.log("Onclose is called, I am going back to the main window...")
-            clearInterval(heartbeatIntervalId);
-            clearInterval(heartbeatCheckingId);
+            stopTimers(heartbeatSendingTimerId, heartbeatCheckingTimerId)
             navigate("/");
         }
 
@@ -76,6 +62,28 @@ const WebSocketClient = () => {
             setMessage("");
         }
     };
+
+    function sendHeartbeatMessage(socket: WebSocket): void {
+        const currentUnixTimestampInSeconds: number = Math.floor(new Date().getTime() / 1000);
+        socket.send(JSON.stringify({
+            clientHeartbeat: currentUnixTimestampInSeconds
+        }));
+    }
+
+    function resetTimer(heartbeatChecking: NodeJS.Timer, socket: WebSocket): NodeJS.Timer {
+        clearInterval(heartbeatChecking)
+        return setInterval(closeClientSocket, 35000, socket, LOST_CONNECTION_TO_SERVER_MSG);
+    }
+
+    function closeClientSocket(socket: WebSocket, reason: String) {
+        console.log(reason);
+        socket.close();
+    }
+
+    function stopTimers(heartbeatSendingTimerId: NodeJS.Timer, heartbeatCheckingTimerId: NodeJS.Timer) {
+        clearInterval(heartbeatSendingTimerId);
+        clearInterval(heartbeatCheckingTimerId);
+    }
 
     return (
         <div className="websocket-container">
