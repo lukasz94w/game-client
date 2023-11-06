@@ -1,10 +1,15 @@
 import {useEffect, useState} from "react";
 import SockJS from "sockjs-client";
+import "./WebSocketClient.css";
+import {useNavigate} from "react-router-dom";
+
 
 const WebSocketClient = () => {
     const [message, setMessage] = useState('');
     const [socket, setSocket] = useState<WebSocket | null>(null);
     const [receivedMessage, setReceivedMessage] = useState('');
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         let heartbeatIntervalId: NodeJS.Timer
@@ -53,7 +58,7 @@ const WebSocketClient = () => {
             console.log("Onclose is called, I am going back to the main window...")
             clearInterval(heartbeatIntervalId);
             clearInterval(heartbeatCheckingId);
-            // TODO: go back to main window
+            navigate("/");
         }
 
         return () => {
@@ -61,7 +66,7 @@ const WebSocketClient = () => {
                 sockJS.close();
             }
         };
-    }, []);
+    }, [navigate]);
 
     const sendMessage = () => {
         if (socket && message.trim() !== "") {
@@ -73,9 +78,10 @@ const WebSocketClient = () => {
     };
 
     return (
-        <div>
+        <div className="websocket-container">
             <h1>WebSocket Client</h1>
             <input
+                className="websocket-input"
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
