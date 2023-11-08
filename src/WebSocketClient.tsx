@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import SockJS from "sockjs-client";
 import "./WebSocketClient.css";
 import {useNavigate} from "react-router-dom";
@@ -8,10 +8,15 @@ const WebSocketClient = () => {
     const [socket, setSocket] = useState<WebSocket | null>(null);
     const [receivedMessage, setReceivedMessage] = useState('');
 
+    const hasPairedSessionReceivedTheMessage = useRef<boolean>(false);
+
+    const navigateTo = useNavigate();
+
+    const heartbeatFrequencyInMs = 60000;
+    const heartbeatCheckingFrequencyInMs = 135000;
+
     const LOST_CONNECTION_TO_SERVER_MSG = "Lost connection to the server.";
     const OPPONENT_DISCONNECTED_MSG = "Opponent has disconnected.";
-
-    const navigate = useNavigate();
 
     useEffect(() => {
         let heartbeatSendingTimerId: NodeJS.Timer
@@ -21,30 +26,44 @@ const WebSocketClient = () => {
 
         sockJS.onopen = () => {
             setSocket(sockJS);
-            heartbeatSendingTimerId = setInterval(sendHeartbeatMessage, 30000, sockJS);
-            heartbeatCheckingTimerId = setInterval(closeClientSocket, 35000, sockJS, LOST_CONNECTION_TO_SERVER_MSG);
+            heartbeatSendingTimerId = setInterval(sendHeartbeatMessage, heartbeatFrequencyInMs, sockJS);
+            heartbeatCheckingTimerId = setInterval(closeClientSocket, heartbeatCheckingFrequencyInMs, sockJS, LOST_CONNECTION_TO_SERVER_MSG);
         };
 
         sockJS.onmessage = (event: any) => {
             let json = JSON.parse(event.data)
 
             if (json.serverMessage) {
+                sendReceivedConfirmationMessage(sockJS);
                 setReceivedMessage(json.serverMessage)
             } else if (json.serverHeartbeat) {
-                const newHeartbeatCheckingTimerId = resetTimer(heartbeatCheckingTimerId, sockJS);
-                heartbeatCheckingTimerId = newHeartbeatCheckingTimerId;
+                heartbeatCheckingTimerId = resetTimer(heartbeatCheckingTimerId, sockJS);
             } else if (json.serverPairedSessionDisconnected) {
                 closeClientSocket(sockJS, OPPONENT_DISCONNECTED_MSG);
+            } else if (json.serverClientReceivedMessageConfirmation) {
+                hasPairedSessionReceivedTheMessage.current = true;
+            } else {
+                console.log("Unknown type of message: " + json)
             }
         };
 
         sockJS.onerror = () => {
-            sockJS.close(); // I can image it can occur where for example paired session lost the connection
+            // For logging purposes to check when it is triggered, for the time being it's not clear for me.
+            // At first my idea was it is triggerred when f.e. socket cannot transfer message to server and then
+            // to paired session. Then some retry policy or informing the user could be applied, but looks like
+            // it's not working like that. So let's just log all triggers to gather more data and learn when
+            // this method is triggerred. Maybe this method is triggerred after longer time? F.e. if there is no
+            // confirmation after longer period of time like tens of seconds? Anyway for now I resigned from checking
+            // using this method if message reached it's paired session. I require confirmation message from
+            // paired session instead.
+            console.log("onerror triggerred")
         }
 
         sockJS.onclose = () => {
+            // I noticed this is triggerred after tens (like 30) of seconds after losing the network connection.
+            // I can image there could be some retry connection policy applied. Currently, I am doing what is seen below.
             stopTimers(heartbeatSendingTimerId, heartbeatCheckingTimerId)
-            navigate("/");
+            navigateTo("/");
         }
 
         return () => {
@@ -52,8 +71,9 @@ const WebSocketClient = () => {
                 sockJS.close();
             }
         };
-    }, [navigate]);
+    }, [navigateTo]);
 
+    // TODO: send message button shouldn't be clickable until the paired session is found
     const sendMessage = () => {
         if (socket && message.trim() !== "") {
             socket.send(JSON.stringify({
@@ -61,6 +81,7 @@ const WebSocketClient = () => {
             }));
             setMessage("");
         }
+        validateIfMessageReachedPairedSession();
     };
 
     function sendHeartbeatMessage(socket: WebSocket): void {
@@ -70,19 +91,48 @@ const WebSocketClient = () => {
         }));
     }
 
-    function resetTimer(heartbeatChecking: NodeJS.Timer, socket: WebSocket): NodeJS.Timer {
-        clearInterval(heartbeatChecking)
-        return setInterval(closeClientSocket, 35000, socket, LOST_CONNECTION_TO_SERVER_MSG);
-    }
-
     function closeClientSocket(socket: WebSocket, reason: String) {
         console.log(reason);
         socket.close();
     }
 
+    function resetTimer(heartbeatChecking: NodeJS.Timer, socket: WebSocket): NodeJS.Timer {
+        clearInterval(heartbeatChecking)
+        return setInterval(closeClientSocket, heartbeatFrequencyInMs, socket, LOST_CONNECTION_TO_SERVER_MSG);
+    }
+
     function stopTimers(heartbeatSendingTimerId: NodeJS.Timer, heartbeatCheckingTimerId: NodeJS.Timer) {
         clearInterval(heartbeatSendingTimerId);
         clearInterval(heartbeatCheckingTimerId);
+    }
+
+    function sendReceivedConfirmationMessage(socket: WebSocket) {
+        socket.send(JSON.stringify({
+            clientReceivedMessageConfirmation: "successfullyReceived"
+        }));
+    }
+
+    // after sending a message check each second if confirmation has been sent from paired session,
+    // if there is no such sent then after 30 seconds inform about it (what to do with this it's another topic)
+    function validateIfMessageReachedPairedSession(): void {
+        hasPairedSessionReceivedTheMessage.current = false;
+        let isCheckingActive = true;
+        const secondIntervalId = setInterval(() => {
+            if (hasPairedSessionReceivedTheMessage.current) {
+                clearInterval(secondIntervalId);
+                clearInterval(finalCheckIntervalId);
+            } else {
+                if (!isCheckingActive) {
+                    setReceivedMessage("Message didn't arrive at your opponent. Try to send it again");
+                }
+            }
+        }, 1000);
+
+        let finalCheckIntervalId = setTimeout(() => {
+            isCheckingActive = false;
+            clearInterval(secondIntervalId);
+            console.log("I haven't got a confirmation in 30 second from the paired session.")
+        }, 30000);
     }
 
     return (
