@@ -7,16 +7,16 @@ const WebSocketClient = () => {
     const [message, setMessage] = useState('');
     const [socket, setSocket] = useState<WebSocket | null>(null);
     const [receivedMessage, setReceivedMessage] = useState('');
-
     const hasPairedSessionReceivedTheMessage = useRef<boolean>(false);
 
-    const navigateTo = useNavigate();
+    const LOST_CONNECTION_TO_SERVER_MSG = "Lost connection to the server.";
+    const OPPONENT_DISCONNECTED_MSG = "Opponent has disconnected.";
+    const SERVER_REJECTION_MESSAGE = "Server has rejected the trial of connection. Try again later."
 
     const heartbeatFrequencyInMs = 60000;
     const heartbeatCheckingFrequencyInMs = 75000;
 
-    const LOST_CONNECTION_TO_SERVER_MSG = "Lost connection to the server.";
-    const OPPONENT_DISCONNECTED_MSG = "Opponent has disconnected.";
+    const navigateTo = useNavigate();
 
     useEffect(() => {
         let heartbeatSendingTimerId: NodeJS.Timer
@@ -42,6 +42,8 @@ const WebSocketClient = () => {
                 closeClientSocket(sockJS, OPPONENT_DISCONNECTED_MSG);
             } else if (json.serverClientReceivedMessageConfirmation) {
                 hasPairedSessionReceivedTheMessage.current = true;
+            } else if (json.serverRejectionMessage) {
+                closeClientSocket(sockJS, SERVER_REJECTION_MESSAGE)
             } else {
                 console.log("Unknown type of message: " + json)
             }
