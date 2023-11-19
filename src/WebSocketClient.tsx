@@ -13,7 +13,7 @@ const WebSocketClient = () => {
     const navigateTo = useNavigate();
 
     const heartbeatFrequencyInMs = 60000;
-    const heartbeatCheckingFrequencyInMs = 135000;
+    const heartbeatCheckingFrequencyInMs = 75000;
 
     const LOST_CONNECTION_TO_SERVER_MSG = "Lost connection to the server.";
     const OPPONENT_DISCONNECTED_MSG = "Opponent has disconnected.";
@@ -26,8 +26,8 @@ const WebSocketClient = () => {
 
         sockJS.onopen = () => {
             setSocket(sockJS);
-            heartbeatSendingTimerId = setInterval(sendHeartbeatMessage, heartbeatFrequencyInMs, sockJS);
-            heartbeatCheckingTimerId = setInterval(closeClientSocket, heartbeatCheckingFrequencyInMs, sockJS, LOST_CONNECTION_TO_SERVER_MSG);
+            heartbeatSendingTimerId = createHeartbeatSendingTimer(sockJS);
+            heartbeatCheckingTimerId = createHeartbeatCheckingTimer(sockJS);
         };
 
         sockJS.onmessage = (event: any) => {
@@ -91,14 +91,22 @@ const WebSocketClient = () => {
         }));
     }
 
+    function createHeartbeatSendingTimer(sockJS: WebSocket): NodeJS.Timer {
+        return setInterval(sendHeartbeatMessage, heartbeatFrequencyInMs, sockJS);
+    }
+
+    function createHeartbeatCheckingTimer(sockJS: WebSocket): NodeJS.Timer {
+        return setInterval(closeClientSocket, heartbeatCheckingFrequencyInMs, sockJS, LOST_CONNECTION_TO_SERVER_MSG);
+    }
+
     function closeClientSocket(socket: WebSocket, reason: String) {
         console.log(reason);
         socket.close();
     }
 
-    function resetTimer(heartbeatChecking: NodeJS.Timer, socket: WebSocket): NodeJS.Timer {
-        clearInterval(heartbeatChecking)
-        return setInterval(closeClientSocket, heartbeatFrequencyInMs, socket, LOST_CONNECTION_TO_SERVER_MSG);
+    function resetTimer(heartbeatCheckingTimerId: NodeJS.Timer, socket: WebSocket): NodeJS.Timer {
+        clearInterval(heartbeatCheckingTimerId)
+        return createHeartbeatCheckingTimer(socket);
     }
 
     function stopTimers(heartbeatSendingTimerId: NodeJS.Timer, heartbeatCheckingTimerId: NodeJS.Timer) {
