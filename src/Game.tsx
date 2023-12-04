@@ -1,9 +1,9 @@
 import {useEffect, useRef, useState} from "react";
 import SockJS from "sockjs-client";
-import "./WebSocketClient.css";
+import "./Game.css";
 import {useNavigate} from "react-router-dom";
 
-const WebSocketClient = () => {
+const Game = () => {
     const [message, setMessage] = useState('');
     const [socket, setSocket] = useState<WebSocket | null>(null);
     const [receivedMessage, setReceivedMessage] = useState('');
@@ -65,7 +65,7 @@ const WebSocketClient = () => {
             // I noticed this is triggerred after tens (like 30) of seconds after losing the network connection.
             // I can image there could be some retry connection policy applied. Currently, I am doing what is seen below.
             stopTimers(heartbeatSendingTimerId, heartbeatCheckingTimerId)
-            navigateTo("/");
+            navigateTo("/main");
         }
 
         return () => {
@@ -164,4 +164,4 @@ const WebSocketClient = () => {
     );
 };
 
-export default WebSocketClient;
+export default Game;

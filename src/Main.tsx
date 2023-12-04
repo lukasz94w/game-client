@@ -1,8 +1,8 @@
 import React from "react";
 import {Link} from "react-router-dom";
-import "./MainPage.css";
+import "./Main.css";
 
-const MainPage = () => {
+const Main = () => {
     return (
         <div className="main">
             <h1>Welcome to the Game!</h1>
@@ -13,4 +13,4 @@ const MainPage = () => {
     );
 };
 
-export default MainPage;
+export default Main;
