@@ -9,49 +9,75 @@ const Login = () => {
     const navigateTo = useNavigate();
 
     useEffect(() => {
-        axios.get('http://localhost:8093/api/v1/auth/sign-in', {
-            // Axios looks for the `auth` option, and, if it is set, formats a
-            // basic auth header for you automatically.
-            auth: {
-                username: 'user1',
-                password: 'user1pass'
-            },
-            withCredentials: true
-        }).then(response => {
-            console.log("cookies", response.headers['set-cookie'])
-            console.log("body", response.data)
-        })
 
         const axiosInstance = axios.create({
             withCredentials: true, // cause session cookie is added to the request
         })
 
-        setTimeout(() => {
-            console.log("checking session after 5 seconds...")
-            const response1 = axiosInstance.get('http://localhost:8093/api/v1/auth/verify', {}).then(response => {
-                console.log(response.status)
-            });
-        }, 5000);
+        const timeout = 15000;
 
         setTimeout(() => {
-            console.log("checking session after 25 seconds...")
-            const response1 = axiosInstance.get('http://localhost:8093/api/v1/auth/verify', {}).then(response => {
-                console.log(response.status)
-            }).catch(err => {
-                alert(err.response.status + " you will be manually logged out")
-                console.log(err.response.status);
-            });
-        }, 25000);
+            axiosInstance.get('http://localhost:8093/api/v1/auth/sign-in', {
+                // Axios looks for the `auth` option, and, if it is set, formats a
+                // basic auth header for you automatically.
+                auth: {
+                    username: 'user1',
+                    password: 'user1pass'
+                },
+            }).then(response => {
+                console.log("sign-in body response: " + response.data)
+            })
+        }, timeout)
 
         setTimeout(() => {
-            console.log("checking session after 90000 seconds...")
             const response1 = axiosInstance.get('http://localhost:8093/api/v1/auth/verify', {}).then(response => {
-                console.log(response.status)
-            }).catch(err => {
-                alert(err.response.status + " you will be manually logged out")
-                console.log(err.response.status);
+                console.log("verify body response after login: ", response.data)
+                console.log("verify status after login: " + response.status)
             });
-        }, 90000);
+        }, timeout + 15000);
+
+        setTimeout(() => {
+            const response1 = axiosInstance.get('http://localhost:8093/api/v1/auth/logout', {}).then(response => {
+                console.log("logout body response: ", response.data)
+                console.log("logout status: " + response.status)
+            });
+        }, timeout + 30000);
+
+        setTimeout(() => {
+            const response1 = axiosInstance.get('http://localhost:8093/api/v1/auth/verify', {}).then(response => {
+            }).catch(error => {
+                console.log("verify body response after logout: ", error.response.data)
+                console.log("verify status after logout: " + error.response.status)
+            });
+        }, timeout + 45000);
+
+
+        // setTimeout(() => {
+        //     console.log("checking session after 5 seconds...")
+        //     const response1 = axiosInstance.get('http://localhost:8093/api/v1/auth/verify', {}).then(response => {
+        //         console.log(response.status)
+        //     });
+        // }, 5000);
+
+        // setTimeout(() => {
+        //     console.log("checking session after 25 seconds...")
+        //     const response1 = axiosInstance.get('http://localhost:8093/api/v1/auth/verify', {}).then(response => {
+        //         console.log(response.status)
+        //     }).catch(err => {
+        //         alert(err.response.status + " you will be manually logged out")
+        //         console.log(err.response.status);
+        //     });
+        // }, 25000);
+
+        // setTimeout(() => {
+        //     console.log("checking session after 90000 seconds...")
+        //     const response1 = axiosInstance.get('http://localhost:8093/api/v1/auth/verify', {}).then(response => {
+        //         console.log(response.status)
+        //     }).catch(err => {
+        //         alert(err.response.status + " you will be manually logged out")
+        //         console.log(err.response.status);
+        //     });
+        // }, 90000);
 
     }, []);
 
