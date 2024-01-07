@@ -2,22 +2,26 @@ import React from "react";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import Login from "./Login";
 import Game from "./Game";
-import Main from "./Main";
-import {AuthenticatedRouteGuard2} from "./guard/AuthenticatedRouteGuard2";
-import {UnauthenticatedRouteGuard2} from "./guard/UnauthenticatedRouteGuard2";
+import Lobby from "./Lobby";
+import {AuthenticatedRouteGuard} from "./guard/AuthenticatedRouteGuard";
+import {UnauthenticatedRouteGuard} from "./guard/UnauthenticatedRouteGuard";
+import {Path} from "./constant/Path";
 
 const App = () => {
     return (
         <BrowserRouter>
             <Routes>
-                <Route element={<AuthenticatedRouteGuard2/>}>
-                    <Route element={<Main/>} path="/main"/>
-                    <Route element={<Game/>} path="/websocket"/>
+                <Route element={<AuthenticatedRouteGuard/>}>
+                    <Route element={<Lobby/>} path={Path.LobbyPath}/>
+                    <Route element={<Game/>} path={Path.GamePath}/>
                 </Route>
-                <Route element={<UnauthenticatedRouteGuard2/>}>
-                    <Route element={<Login/>} path="/login"/>
-                    <Route element={<Login/>} path="*"/> {/* there could be also some 404 being shown */}
+                <Route element={<UnauthenticatedRouteGuard/>}>
+                    <Route element={<Login/>} path={Path.LoginPath}/>
+                    {/* There could be also some 404 being shown instead of LoginPage. If user is logged in then it will be redirected to MainPage. */}
+                    <Route element={<Login/>} path={Path.NotDefinedPath}/>
                 </Route>
+
+
             </Routes>
         </BrowserRouter>
     );
