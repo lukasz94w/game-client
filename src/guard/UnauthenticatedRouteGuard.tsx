@@ -1,11 +1,24 @@
-import React from 'react';
-import {Outlet, Navigate} from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {Outlet, useNavigate} from 'react-router-dom';
+import authService from "../service/AuthService";
+import {Path} from "../constant/Path";
 
-const UnauthenticatedRouteGuard = () => {
-    const isLoggedIn = !!sessionStorage.getItem('token');
+export const UnauthenticatedRouteGuard = () => {
+    const navigate = useNavigate()
+    const [isAuthenticated, setIsAuthenticated] = useState(true)
+
+    useEffect(() => {
+        authService.verifySignedIn()
+            .then(() => {
+                setIsAuthenticated(true)
+                navigate(Path.LobbyPath)
+            })
+            .catch(() => {
+                setIsAuthenticated(false)
+            });
+    }, [navigate]);
+
     return (
-        isLoggedIn ? <Navigate to="/main"/> : <Outlet/>
+        isAuthenticated ? <></> : <Outlet/>
     )
 }
-
-export default UnauthenticatedRouteGuard;
