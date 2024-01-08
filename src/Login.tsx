@@ -16,9 +16,8 @@ const Login = () => {
                 // is no need to catch it from the request and storing it for example in session storage
                 navigateTo(Path.LobbyPath);
             })
-            .catch(error => {
+            .catch(() => {
                 alert("Wrong credentials. Please try again.")
-                console.log(error.response.status)
             })
     };
 

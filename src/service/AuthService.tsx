@@ -1,12 +1,8 @@
-import axios from "axios";
 import {AuthUrl} from "../constant/AuthUrl";
-
-const axiosWithCredentials = axios.create({
-    withCredentials: true, // causes to use authorization in the requests (f.e. Bearer token or session cookie if available)
-})
+import axiosInstance from "./AxiosInstance";
 
 const signIn = (username: string, password: string) => {
-    return axiosWithCredentials.get(AuthUrl.SignInUrl, {
+    return axiosInstance.get(AuthUrl.SignInUrl, {
         auth: {
             username: username,
             password: password
@@ -15,11 +11,11 @@ const signIn = (username: string, password: string) => {
 };
 
 const signOut = () => {
-    return axiosWithCredentials.get(AuthUrl.SignOutUrl)
+    return axiosInstance.get(AuthUrl.SignOutUrl)
 }
 
 const verifySignedIn = () => {
-    return axiosWithCredentials.get(AuthUrl.VerifySignedInUrl)
+    return axiosInstance.get(AuthUrl.VerifySignedInUrl)
 }
 
 const AuthService = {

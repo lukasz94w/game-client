@@ -1,4 +1,4 @@
-const AuthUrlPrefix = "http://localhost:8093/api/v1/auth/";
+const AuthUrlPrefix = "auth/";
 
 export const AuthUrl = {
     SignInUrl: AuthUrlPrefix + "signIn",
