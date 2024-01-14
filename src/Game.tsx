@@ -1,7 +1,8 @@
-import {useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import SockJS from "sockjs-client";
 import "./Game.css";
-import {useNavigate} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
+import {Path} from "./constant/Path";
 
 const Game = () => {
     const [message, setMessage] = useState('');
@@ -65,7 +66,7 @@ const Game = () => {
             // I noticed this is triggerred after tens (like 30) of seconds after losing the network connection.
             // I can image there could be some retry connection policy applied. Currently, I am doing what is seen below.
             stopTimers(heartbeatSendingTimerId, heartbeatCheckingTimerId)
-            navigateTo("/main");
+            navigateTo(Path.LobbyPath);
         }
 
         return () => {
@@ -146,21 +147,37 @@ const Game = () => {
     }
 
     return (
-        <div className="websocket-container">
-            <h1>WebSocket Client</h1>
-            <input
-                className="websocket-input"
-                type="text"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Enter message"
-            />
-            <button onClick={sendMessage}>Send</button>
-            <div>
-                <h2>Received Message:</h2>
-                <p>{receivedMessage}</p>
-            </div>
-        </div>
+        socket === null ?
+
+            (
+                <div className="loading-container">
+                    <div className="loading-message">Loading...</div>
+                    <div className="spinner"></div>
+                </div>
+            )
+
+            :
+
+            (
+                <div className="websocket-container">
+                    <h1>WebSocket Client</h1>
+                    <input
+                        className="websocket-input"
+                        type="text"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder="Enter message"
+                    />
+                    <button onClick={sendMessage}>Send</button>
+                    <div>
+                        <h2>Received Message:</h2>
+                        <p>{receivedMessage}</p>
+                    </div>
+                    <Link to={Path.LobbyPath}>
+                        <button className="btn-connect">Finish the game</button>
+                    </Link>
+                </div>
+            )
     );
 };
 
