@@ -4,25 +4,24 @@ import "./Game.css";
 import {Link, useNavigate} from "react-router-dom";
 import {Path} from "../constant/Path";
 import Square from "./Square";
+import {closeClientSocket, createHeartbeatCheckingTimer, createHeartbeatSendingTimer, resetTimer, sendReceivedConfirmationMessage, stopTimers} from "../util/SocketUtil";
+import {calculateWinner} from "../util/GameUtil";
+import {OPPONENT_DISCONNECTED_MSG, SERVER_REJECTION_MESSAGE} from "../constant/Message";
 
 const Game = () => {
     const [message, setMessage] = useState('');
     const [socket, setSocket] = useState<WebSocket | null>(null);
+    const [isOpponentFound, setIsOpponentFound] = useState(false);
     const [receivedMessage, setReceivedMessage] = useState('');
     const hasPairedSessionReceivedTheMessage = useRef<boolean>(false);
-
-    const LOST_CONNECTION_TO_SERVER_MSG = "Lost connection to the server.";
-    const OPPONENT_DISCONNECTED_MSG = "Opponent has disconnected.";
-    const SERVER_REJECTION_MESSAGE = "Server has rejected the trial of connection. Try again later."
-
-    const heartbeatFrequencyInMs = 60000;
-    const heartbeatCheckingFrequencyInMs = 75000;
-
-    const navigateTo = useNavigate();
 
     const initialBoard = Array(9).fill(null);
     const [squares, setSquares] = useState(initialBoard);
     const [xIsNext, setXIsNext] = useState(true);
+    const winner = calculateWinner(squares);
+    const status = winner ? `Winner: ${winner}` : `Next player: ${xIsNext ? 'X' : 'O'}`;
+
+    const navigateTo = useNavigate();
 
     useEffect(() => {
         let heartbeatSendingTimerId: NodeJS.Timer
@@ -50,6 +49,8 @@ const Game = () => {
                 hasPairedSessionReceivedTheMessage.current = true;
             } else if (json.serverRejectionMessage) {
                 closeClientSocket(sockJS, SERVER_REJECTION_MESSAGE)
+            } else if (json.serverOpponentFound) {
+                setIsOpponentFound(true);
             } else {
                 console.log("Unknown type of message: " + json)
             }
@@ -92,45 +93,9 @@ const Game = () => {
         validateIfMessageReachedPairedSession();
     };
 
-    function sendHeartbeatMessage(socket: WebSocket): void {
-        const currentUnixTimestampInSeconds: number = Math.floor(new Date().getTime() / 1000);
-        socket.send(JSON.stringify({
-            clientHeartbeat: currentUnixTimestampInSeconds
-        }));
-    }
-
-    function createHeartbeatSendingTimer(sockJS: WebSocket): NodeJS.Timer {
-        return setInterval(sendHeartbeatMessage, heartbeatFrequencyInMs, sockJS);
-    }
-
-    function createHeartbeatCheckingTimer(sockJS: WebSocket): NodeJS.Timer {
-        return setInterval(closeClientSocket, heartbeatCheckingFrequencyInMs, sockJS, LOST_CONNECTION_TO_SERVER_MSG);
-    }
-
-    function closeClientSocket(socket: WebSocket, reason: String) {
-        console.log(reason);
-        socket.close();
-    }
-
-    function resetTimer(heartbeatCheckingTimerId: NodeJS.Timer, socket: WebSocket): NodeJS.Timer {
-        clearInterval(heartbeatCheckingTimerId)
-        return createHeartbeatCheckingTimer(socket);
-    }
-
-    function stopTimers(heartbeatSendingTimerId: NodeJS.Timer, heartbeatCheckingTimerId: NodeJS.Timer) {
-        clearInterval(heartbeatSendingTimerId);
-        clearInterval(heartbeatCheckingTimerId);
-    }
-
-    function sendReceivedConfirmationMessage(socket: WebSocket) {
-        socket.send(JSON.stringify({
-            clientReceivedMessageConfirmation: "successfullyReceived"
-        }));
-    }
-
     // after sending a message check each second if confirmation has been sent from paired session,
     // if there is no such sent then after 30 seconds inform about it (what to do with this it's another topic)
-    function validateIfMessageReachedPairedSession(): void {
+    const validateIfMessageReachedPairedSession = () => {
         hasPairedSessionReceivedTheMessage.current = false;
         let isCheckingActive = true;
         const secondIntervalId = setInterval(() => {
@@ -151,28 +116,6 @@ const Game = () => {
         }, 30000);
     }
 
-    const calculateWinner = (squares: number[]) => {
-        const lines = [
-            [0, 1, 2],
-            [3, 4, 5],
-            [6, 7, 8],
-            [0, 3, 6],
-            [1, 4, 7],
-            [2, 5, 8],
-            [0, 4, 8],
-            [2, 4, 6],
-        ];
-
-        for (let i = 0; i < lines.length; i++) {
-            const [a, b, c] = lines[i];
-            if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-                return squares[a];
-            }
-        }
-
-        return null;
-    };
-
     const handleClick = (i: number) => {
         if (squares[i] || calculateWinner(squares)) {
             return;
@@ -184,13 +127,6 @@ const Game = () => {
         setSquares(newSquares);
         setXIsNext(!xIsNext);
     };
-
-    const renderSquare = (i: number) => (
-        <Square value={squares[i]} onClick={() => handleClick(i)}/>
-    );
-
-    const winner = calculateWinner(squares);
-    const status = winner ? `Winner: ${winner}` : `Next player: ${xIsNext ? 'X' : 'O'}`;
 
     return (
         socket === null ?
@@ -205,42 +141,55 @@ const Game = () => {
             :
 
             (
-                <div className="websocket-container">
-                    <div>
-                        <div className="status">{status}</div>
-                        <div className="board-row">
-                            {renderSquare(0)}
-                            {renderSquare(1)}
-                            {renderSquare(2)}
-                        </div>
-                        <div className="board-row">
-                            {renderSquare(3)}
-                            {renderSquare(4)}
-                            {renderSquare(5)}
-                        </div>
-                        <div className="board-row">
-                            {renderSquare(6)}
-                            {renderSquare(7)}
-                            {renderSquare(8)}
-                        </div>
-                    </div>
+                isOpponentFound ?
 
-                    <h1>WebSocket Client</h1>
-                    <input
-                        className="websocket-input"
-                        type="text"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Enter message"/>
-                    <button onClick={sendMessage}>Send</button>
-                    <div>
-                        <h2>Received Message:</h2>
-                        <p>{receivedMessage}</p>
-                    </div>
-                    <Link to={Path.LobbyPath}>
-                        <button className="btn-connect">Finish the game</button>
-                    </Link>
-                </div>
+                    (
+                        <div className="websocket-container">
+                            <h1>Game started. Good luck!</h1>
+                            <div>
+                                <div className="board-row">
+                                    <Square value={squares[0]} onClick={() => handleClick(0)}/>
+                                    <Square value={squares[1]} onClick={() => handleClick(1)}/>
+                                    <Square value={squares[2]} onClick={() => handleClick(2)}/>
+                                </div>
+                                <div className="board-row">
+                                    <Square value={squares[3]} onClick={() => handleClick(3)}/>
+                                    <Square value={squares[4]} onClick={() => handleClick(4)}/>
+                                    <Square value={squares[5]} onClick={() => handleClick(5)}/>
+                                </div>
+                                <div className="board-row">
+                                    <Square value={squares[6]} onClick={() => handleClick(6)}/>
+                                    <Square value={squares[7]} onClick={() => handleClick(7)}/>
+                                    <Square value={squares[8]} onClick={() => handleClick(8)}/>
+                                </div>
+                                <div className="status">{status}</div>
+                            </div>
+
+                            <input
+                                className="websocket-input"
+                                type="text"
+                                value={message}
+                                onChange={(e) => setMessage(e.target.value)}
+                                placeholder="Enter message"/>
+                            <button onClick={sendMessage}>Send</button>
+                            <div>
+                                <h2>Received Message:</h2>
+                                <p>{receivedMessage}</p>
+                            </div>
+                            <Link to={Path.LobbyPath}>
+                                <button className="btn-connect">Finish the game</button>
+                            </Link>
+                        </div>
+
+                    )
+
+                    :
+
+                    (
+                        <div className="waiting-container">
+                            <div className="waiting-message">Please wait for the opponent to join...</div>
+                        </div>
+                    )
             )
     );
 };
