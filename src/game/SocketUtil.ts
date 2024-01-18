@@ -1,5 +1,9 @@
-import {LOST_CONNECTION_TO_SERVER_MSG} from "../constant/SessionStatus";
-import {CLIENT_MESSAGE_RECEIVED_MESSAGE_CONFIRMATION, CLIENT_SESSION_STATUS_UPDATE_HEARTBEAT} from "../message/Client";
+import {LOST_CONNECTION_TO_SERVER_MSG} from "../constants/SessionError";
+import {
+    CLIENT_MESSAGE_RECEIVED_GAME_STATUS_UPDATE_CONFIRMATION,
+    CLIENT_MESSAGE_RECEIVED_MESSAGE_CONFIRMATION,
+    CLIENT_SESSION_STATUS_UPDATE_HEARTBEAT
+} from "../message/Client";
 
 const heartbeatFrequencyInMs = 60000;
 const heartbeatCheckingFrequencyInMs = 75000;
@@ -34,8 +38,14 @@ export const stopTimers = (heartbeatSendingTimerId: NodeJS.Timer, heartbeatCheck
     clearInterval(heartbeatCheckingTimerId);
 };
 
-export const sendReceivedConfirmationMessage = (socket: WebSocket): void => {
+export const sendMessageReceivedConfirmation = (socket: WebSocket): void => {
     socket.send(JSON.stringify({
-        [CLIENT_MESSAGE_RECEIVED_MESSAGE_CONFIRMATION]: "successfullyReceived"
+        [CLIENT_MESSAGE_RECEIVED_MESSAGE_CONFIRMATION]: "received"
+    }));
+};
+
+export const sendReceivedGameStatusUpdateConfirmation = (socket: WebSocket): void => {
+    socket.send(JSON.stringify({
+        [CLIENT_MESSAGE_RECEIVED_GAME_STATUS_UPDATE_CONFIRMATION]: "received"
     }));
 };

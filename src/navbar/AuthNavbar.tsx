@@ -2,7 +2,7 @@ import React from 'react';
 import {useNavigate} from 'react-router-dom';
 import './AuthNavbar.css';
 import authService from '../service/AuthService';
-import {Path} from '../constant/Path';
+import {Path} from '../constants/Path';
 
 const AuthNavbar = () => {
     const navigate = useNavigate();

@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Outlet, useNavigate} from 'react-router-dom';
 import authService from "../service/AuthService";
-import {Path} from "../constant/Path";
+import {Path} from "../constants/Path";
 import AuthNavbar from "../navbar/AuthNavbar";
 
 export const AuthenticatedRouteGuard = () => {

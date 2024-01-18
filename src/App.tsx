@@ -5,7 +5,7 @@ import Game from "./game/Game";
 import Lobby from "./Lobby";
 import {AuthenticatedRouteGuard} from "./guard/AuthenticatedRouteGuard";
 import {UnauthenticatedRouteGuard} from "./guard/UnauthenticatedRouteGuard";
-import {Path} from "./constant/Path";
+import {Path} from "./constants/Path";
 import globalRouter from "./router/GlobalRouter";
 
 const App = () => {
