@@ -1,4 +1,5 @@
-import {LOST_CONNECTION_TO_SERVER_MSG} from "../constant/Message";
+import {LOST_CONNECTION_TO_SERVER_MSG} from "../constant/SessionStatus";
+import {CLIENT_MESSAGE_RECEIVED_MESSAGE_CONFIRMATION, CLIENT_SESSION_STATUS_UPDATE_HEARTBEAT} from "../message/Client";
 
 const heartbeatFrequencyInMs = 60000;
 const heartbeatCheckingFrequencyInMs = 75000;
@@ -6,7 +7,7 @@ const heartbeatCheckingFrequencyInMs = 75000;
 const sendHeartbeatMessage = (socket: WebSocket): void => {
     const currentUnixTimestampInSeconds: number = Math.floor(new Date().getTime() / 1000);
     socket.send(JSON.stringify({
-        clientHeartbeat: currentUnixTimestampInSeconds
+        [CLIENT_SESSION_STATUS_UPDATE_HEARTBEAT]: currentUnixTimestampInSeconds
     }));
 };
 
@@ -35,6 +36,6 @@ export const stopTimers = (heartbeatSendingTimerId: NodeJS.Timer, heartbeatCheck
 
 export const sendReceivedConfirmationMessage = (socket: WebSocket): void => {
     socket.send(JSON.stringify({
-        clientReceivedMessageConfirmation: "successfullyReceived"
+        [CLIENT_MESSAGE_RECEIVED_MESSAGE_CONFIRMATION]: "successfullyReceived"
     }));
 };

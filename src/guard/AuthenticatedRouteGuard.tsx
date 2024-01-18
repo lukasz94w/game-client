@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {Outlet, useNavigate} from 'react-router-dom';
 import authService from "../service/AuthService";
 import {Path} from "../constant/Path";
-import LogoutNavbar from "../navbar/LogoutNavbar";
+import AuthNavbar from "../navbar/AuthNavbar";
 
 export const AuthenticatedRouteGuard = () => {
     const navigate = useNavigate()
@@ -22,7 +22,7 @@ export const AuthenticatedRouteGuard = () => {
     return (
         isAuthenticated ?
             <div>
-                <LogoutNavbar/>
+                <AuthNavbar/>
                 <Outlet/>
             </div>
             :

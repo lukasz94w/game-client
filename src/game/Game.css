@@ -54,9 +54,10 @@
 }
 
 .status {
-    font-size: 24px;
-    font-weight: bold;
+    font-size: 17px;
+    margin-top: 15px;
     margin-bottom: 10px;
+    text-align: center;
 }
 
 .board-row:after {
@@ -88,4 +89,10 @@
     margin-top: 20px;
 }
 
+.board-container {
+    opacity: 1.0; /* Adjust the opacity value as needed */
+}
 
+.board-container:not(.player-turn) {
+    opacity: 0.5; /* Dim the board when not player turn */
+}

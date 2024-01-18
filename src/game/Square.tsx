@@ -2,7 +2,7 @@ import './Square.css'
 
 interface SquareProps {
     value: string | null;
-    onClick: () => void; // Assuming it's a simple click handler without event details
+    onClick: () => void;
 }
 
 const Square: React.FC<SquareProps> = ({ value, onClick }) => (
