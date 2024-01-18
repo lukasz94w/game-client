@@ -1,0 +1,98 @@
+.websocket-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+.websocket-input {
+    margin-bottom: 10px;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh; /* Set the height of the container to the full viewport height */
+}
+
+.loading-message {
+    font-size: 24px; /* Adjust the font size as needed */
+    font-weight: bold; /* Optionally make the text bold */
+    margin-bottom: 10px; /* Adjust the margin as needed */
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #3498db; /* Adjust the spinner color */
+    border-radius: 50%;
+    width: 30px; /* Make the spinner 1.5 times bigger */
+    height: 30px; /* Make the spinner 1.5 times bigger */
+    animation: spin 1s linear infinite; /* Configure the rotation animation */
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.game {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.game-board {
+    border: 2px solid #333;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+.status {
+    font-size: 17px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.board-row:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.square:hover {
+    background-color: #f1f1f1;
+}
+
+/* Optional: Add styles for the winner */
+.square.winner {
+    background-color: #6fd56b;
+    color: #fff;
+}
+
+.waiting-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+.waiting-message {
+    font-size: 27px;
+    margin-top: 20px;
+}
+
+.board-container {
+    opacity: 1.0; /* Adjust the opacity value as needed */
+}
+
+.board-container:not(.player-turn) {
+    opacity: 0.5; /* Dim the board when not player turn */
+}

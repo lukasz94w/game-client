@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Outlet, useNavigate} from 'react-router-dom';
 import authService from "../service/AuthService";
-import {Path} from "../constant/Path";
+import {Path} from "../constants/Path";
 
 export const UnauthenticatedRouteGuard = () => {
     const navigate = useNavigate()

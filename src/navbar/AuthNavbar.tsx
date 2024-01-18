@@ -1,10 +1,10 @@
 import React from 'react';
 import {useNavigate} from 'react-router-dom';
-import './LogoutNavbar.css';
+import './AuthNavbar.css';
 import authService from '../service/AuthService';
-import {Path} from '../constant/Path';
+import {Path} from '../constants/Path';
 
-const LogoutNavbar = () => {
+const AuthNavbar = () => {
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -34,4 +34,4 @@ const LogoutNavbar = () => {
     );
 };
 
-export default LogoutNavbar;
+export default AuthNavbar;
