@@ -1,4 +1,4 @@
-import {AuthUrl} from "../constants/AuthUrl";
+import {AuthUrl} from "../../commons/AuthUrl";
 import axiosInstance from "./AxiosInstance";
 
 const signIn = (username: string, password: string) => {

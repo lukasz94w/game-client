@@ -1,0 +1,2 @@
+export const FIRST_PLAYER_SQUARE_VALUE = "X"
+export const SECOND_PLAYER_SQUARE_VALUE = "O"
