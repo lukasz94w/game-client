@@ -1,6 +1,6 @@
 import axios from 'axios';
-import globalRouter from "../router/GlobalRouter";
-import {Path} from "../constants/Path";
+import globalRouter from "../../router/GlobalRouter";
+import {Path} from "../../commons/Path";
 
 const axiosInstance = axios.create({
     baseURL: 'http://localhost:8093/api/v1/',

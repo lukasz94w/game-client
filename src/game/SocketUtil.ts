@@ -1,12 +1,12 @@
-import {LOST_CONNECTION_TO_SERVER_MSG} from "../constants/SessionError";
+import {LOST_CONNECTION_TO_SERVER} from "./SessionError";
 import {
     CLIENT_MESSAGE_RECEIVED_GAME_STATUS_UPDATE_CONFIRMATION,
     CLIENT_MESSAGE_RECEIVED_MESSAGE_CONFIRMATION,
     CLIENT_SESSION_STATUS_UPDATE_HEARTBEAT
-} from "../message/Client";
+} from "../api/message/Client";
 
-const heartbeatFrequencyInMs = 60000;
-const heartbeatCheckingFrequencyInMs = 75000;
+const HEARTBEAT_FREQUENCY = 60000;
+const HEARTBEAT_CHECKING_FREQUENCY = 75000;
 
 const sendHeartbeatMessage = (socket: WebSocket): void => {
     const currentUnixTimestampInSeconds: number = Math.floor(new Date().getTime() / 1000);
@@ -16,11 +16,11 @@ const sendHeartbeatMessage = (socket: WebSocket): void => {
 };
 
 export const createHeartbeatSendingTimer = (sockJS: WebSocket): NodeJS.Timer => {
-    return setInterval(sendHeartbeatMessage, heartbeatFrequencyInMs, sockJS);
+    return setInterval(sendHeartbeatMessage, HEARTBEAT_FREQUENCY, sockJS);
 };
 
 export const createHeartbeatCheckingTimer = (sockJS: WebSocket): NodeJS.Timer => {
-    return setInterval(closeClientSocket, heartbeatCheckingFrequencyInMs, sockJS, LOST_CONNECTION_TO_SERVER_MSG);
+    return setInterval(closeClientSocket, HEARTBEAT_CHECKING_FREQUENCY, sockJS, LOST_CONNECTION_TO_SERVER);
 };
 
 export const closeClientSocket = (socket: WebSocket, reason: string): void => {

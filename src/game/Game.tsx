@@ -2,14 +2,42 @@ import React, {useEffect, useRef, useState} from "react";
 import SockJS from "sockjs-client";
 import "./Game.css";
 import {Link, useNavigate} from "react-router-dom";
-import {Path} from "../constants/Path";
+import {Path} from "../commons/Path";
 import Square from "./Square";
-import {closeClientSocket, createHeartbeatCheckingTimer, createHeartbeatSendingTimer, resetTimer, sendMessageReceivedConfirmation, sendReceivedGameStatusUpdateConfirmation, stopTimers} from "./SocketUtil";
-import {OPPONENT_DISCONNECTED_MSG, PAIRED_SESSION_DIDNT_RECEIVE_GAME_STATUS_UPDATE, PAIRED_SESSION_DIDNT_RECEIVE_MESSAGE, SERVER_REJECTION_MSG} from "../constants/SessionError";
-import {FIRST_PLAYER_ORDER, FIRST_PLAYER_SQUARE_VALUE, RECEIVED_CHECKING_INTERVAL, RECEIVED_CHECKING_TOTAL_TIME, SECOND_PLAYER_SQUARE_VALUE} from "../constants/Game";
-import {CLIENT_GAME_UPDATE_CHOSEN_SQUARE_NUMBER, CLIENT_GAME_UPDATE_CHOSEN_SQUARE_VALUE, CLIENT_MESSAGE_NEW_MESSAGE} from "../message/Client";
-import {SERVER_GAME_UPDATE_GAME_ENDED, SERVER_GAME_UPDATE_GAME_STARTED, SERVER_GAME_UPDATE_STATUS, SERVER_MESSAGE_CLIENT_RECEIVED_GAME_STATUS_CHANGE_CONFIRMATION, SERVER_MESSAGE_CLIENT_RECEIVED_MESSAGE_CONFIRMATION, SERVER_MESSAGE_NEW_MESSAGE, SERVER_SESSION_STATUS_UPDATE_HEARTBEAT, SERVER_SESSION_STATUS_UPDATE_PAIRED_SESSION_DISCONNECTED, SERVER_SESSION_STATUS_UPDATE_SESSION_REJECTED} from "../message/Server";
-import {DRAW, FIRST_PLAYER_WON, SECOND_PLAYER_WON} from "../constants/GameResult";
+import {
+    closeClientSocket,
+    createHeartbeatCheckingTimer,
+    createHeartbeatSendingTimer,
+    resetTimer,
+    sendMessageReceivedConfirmation,
+    sendReceivedGameStatusUpdateConfirmation,
+    stopTimers
+} from "./SocketUtil";
+import {
+    OPPONENT_DISCONNECTED,
+    PAIRED_SESSION_DIDNT_RECEIVE_GAME_STATUS_UPDATE,
+    PAIRED_SESSION_DIDNT_RECEIVE_MESSAGE,
+    SERVER_REJECTION
+} from "./SessionError";
+import {
+    CLIENT_GAME_UPDATE_CHOSEN_SQUARE_NUMBER,
+    CLIENT_GAME_UPDATE_CHOSEN_SQUARE_VALUE,
+    CLIENT_MESSAGE_NEW_MESSAGE
+} from "../api/message/Client";
+import {
+    SERVER_GAME_UPDATE_GAME_ENDED,
+    SERVER_GAME_UPDATE_GAME_STARTED,
+    SERVER_GAME_UPDATE_STATUS,
+    SERVER_MESSAGE_CLIENT_RECEIVED_GAME_STATUS_CHANGE_CONFIRMATION,
+    SERVER_MESSAGE_CLIENT_RECEIVED_MESSAGE_CONFIRMATION,
+    SERVER_MESSAGE_NEW_MESSAGE,
+    SERVER_SESSION_STATUS_UPDATE_HEARTBEAT,
+    SERVER_SESSION_STATUS_UPDATE_PAIRED_SESSION_DISCONNECTED,
+    SERVER_SESSION_STATUS_UPDATE_SESSION_REJECTED
+} from "../api/message/Server";
+import {FIRST_PLAYER_WON, SECOND_PLAYER_WON, UNRESOLVED} from "./message/GameResult";
+import {FIRST_PLAYER_ORDER} from "./message/GameOrder";
+import {FIRST_PLAYER_SQUARE_VALUE, SECOND_PLAYER_SQUARE_VALUE} from "./GameVariables";
 
 const Game = () => {
     const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -29,6 +57,9 @@ const Game = () => {
     const hasPairedSessionReceivedTheGameUpdate = useRef<boolean>()
 
     const navigateTo = useNavigate();
+
+    const CONFIRMATION_RECEIVED_CHECKING_INTERVAL = 1000;
+    const CONFIRMATION_RECEIVED_CHECKING_TOTAL = 30000;
 
     useEffect(() => {
         let heartbeatSendingTimerId: NodeJS.Timer
@@ -71,10 +102,10 @@ const Game = () => {
                     heartbeatCheckingTimerId = resetTimer(heartbeatCheckingTimerId, sockJS);
                     break;
                 case !!json[SERVER_SESSION_STATUS_UPDATE_PAIRED_SESSION_DISCONNECTED]:
-                    closeClientSocket(sockJS, OPPONENT_DISCONNECTED_MSG);
+                    closeClientSocket(sockJS, OPPONENT_DISCONNECTED);
                     break;
                 case !!json[SERVER_SESSION_STATUS_UPDATE_SESSION_REJECTED]:
-                    closeClientSocket(sockJS, SERVER_REJECTION_MSG);
+                    closeClientSocket(sockJS, SERVER_REJECTION);
                     break;
                 default:
                     console.log("Unknown type of message:", json);
@@ -166,7 +197,7 @@ const Game = () => {
     const handleGameEnd = (gameResult: string) => {
         if ((gameResult === FIRST_PLAYER_WON && isFirstPlayer.current) || (gameResult === SECOND_PLAYER_WON && !isFirstPlayer.current)) {
             setGameStatus("Congratulations you won!")
-        } else if (gameResult === DRAW) {
+        } else if (gameResult === UNRESOLVED) {
             setGameStatus("Draw.")
         } else {
             setGameStatus("You lost :(")
@@ -181,14 +212,14 @@ const Game = () => {
                 clearInterval(secondIntervalId);
                 clearInterval(finalCheckIntervalId);
             }
-        }, RECEIVED_CHECKING_INTERVAL);
+        }, CONFIRMATION_RECEIVED_CHECKING_INTERVAL);
 
         let finalCheckIntervalId = setTimeout(() => {
             // situation when message didn't arrive the paired session is not as serious as when there is
             // no game status received, player can still send the message again, game is not finished
             clearInterval(secondIntervalId);
             alert(PAIRED_SESSION_DIDNT_RECEIVE_MESSAGE);
-        }, RECEIVED_CHECKING_TOTAL_TIME);
+        }, CONFIRMATION_RECEIVED_CHECKING_TOTAL);
     }
 
     const ensureGameStatusUpdateReachedPairedSession = () => {
@@ -198,7 +229,7 @@ const Game = () => {
                 clearInterval(secondIntervalId);
                 clearInterval(finalCheckIntervalId);
             }
-        }, RECEIVED_CHECKING_INTERVAL);
+        }, CONFIRMATION_RECEIVED_CHECKING_INTERVAL);
 
         let finalCheckIntervalId = setTimeout(() => {
             // When paired session didn't receive the game status change situation is so serious that game needs to be finished,
@@ -208,7 +239,7 @@ const Game = () => {
             clearInterval(secondIntervalId);
             alert(PAIRED_SESSION_DIDNT_RECEIVE_GAME_STATUS_UPDATE);
             navigateTo(Path.LobbyPath);
-        }, RECEIVED_CHECKING_TOTAL_TIME);
+        }, CONFIRMATION_RECEIVED_CHECKING_TOTAL);
     }
 
     return (
