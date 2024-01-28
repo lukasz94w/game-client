@@ -1,6 +1,6 @@
-export const CLIENT_MESSAGE_NEW_MESSAGE = "clientMessageNewMessage";
-export const CLIENT_MESSAGE_RECEIVED_MESSAGE_CONFIRMATION = "clientMessageReceivedMessageConfirmation";
-export const CLIENT_MESSAGE_RECEIVED_GAME_STATUS_UPDATE_CONFIRMATION = "clientMessageReceivedGameStatusUpdateConfirmation";
+export const CLIENT_MESSAGE_PLAYER_MESSAGE = "clientMessagePlayerMessage";
+export const CLIENT_GAME_RECEIVED_GAME_STATUS_UPDATE_CONFIRMATION = "clientGameReceivedGameStatusUpdateConfirmation";
+export const CLIENT_GAME_UPDATE_GAME_CHANGED = "clientGameUpdateGameChanged";
 export const CLIENT_GAME_UPDATE_CHOSEN_SQUARE_NUMBER = "clientGameUpdateChosenSquareNumber";
 export const CLIENT_GAME_UPDATE_CHOSEN_SQUARE_VALUE = "clientGameUpdateChosenSquareValue";
 export const CLIENT_SESSION_STATUS_UPDATE_HEARTBEAT = "clientSessionStatusUpdateHeartbeat";

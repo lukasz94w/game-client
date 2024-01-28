@@ -1,7 +1,8 @@
 import {LOST_CONNECTION_TO_SERVER} from "./SessionError";
 import {
-    CLIENT_MESSAGE_RECEIVED_GAME_STATUS_UPDATE_CONFIRMATION,
-    CLIENT_MESSAGE_RECEIVED_MESSAGE_CONFIRMATION,
+    CLIENT_GAME_RECEIVED_GAME_STATUS_UPDATE_CONFIRMATION,
+    CLIENT_GAME_UPDATE_CHOSEN_SQUARE_NUMBER,
+    CLIENT_GAME_UPDATE_CHOSEN_SQUARE_VALUE,
     CLIENT_SESSION_STATUS_UPDATE_HEARTBEAT
 } from "../api/message/Client";
 
@@ -37,15 +38,10 @@ export const stopTimers = (heartbeatSendingTimerId: NodeJS.Timer, heartbeatCheck
     clearInterval(heartbeatSendingTimerId);
     clearInterval(heartbeatCheckingTimerId);
 };
-
-export const sendMessageReceivedConfirmation = (socket: WebSocket): void => {
+export const sendReceivedGameStatusUpdateConfirmation = (socket: WebSocket, opponentSquareValue: string, opponentChosenSquareNumber: any): void => {
     socket.send(JSON.stringify({
-        [CLIENT_MESSAGE_RECEIVED_MESSAGE_CONFIRMATION]: "received"
-    }));
-};
-
-export const sendReceivedGameStatusUpdateConfirmation = (socket: WebSocket): void => {
-    socket.send(JSON.stringify({
-        [CLIENT_MESSAGE_RECEIVED_GAME_STATUS_UPDATE_CONFIRMATION]: "received"
+        [CLIENT_GAME_RECEIVED_GAME_STATUS_UPDATE_CONFIRMATION]: "",
+        [CLIENT_GAME_UPDATE_CHOSEN_SQUARE_VALUE]: opponentSquareValue,
+        [CLIENT_GAME_UPDATE_CHOSEN_SQUARE_NUMBER]: opponentChosenSquareNumber
     }));
 };
