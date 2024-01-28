@@ -9,28 +9,22 @@ import {
     createHeartbeatCheckingTimer,
     createHeartbeatSendingTimer,
     resetTimer,
-    sendMessageReceivedConfirmation,
     sendReceivedGameStatusUpdateConfirmation,
     stopTimers
 } from "./SocketUtil";
-import {
-    OPPONENT_DISCONNECTED,
-    PAIRED_SESSION_DIDNT_RECEIVE_GAME_STATUS_UPDATE,
-    PAIRED_SESSION_DIDNT_RECEIVE_MESSAGE,
-    SERVER_REJECTION
-} from "./SessionError";
+import {OPPONENT_DISCONNECTED, PAIRED_SESSION_DIDNT_RECEIVE_GAME_STATUS_UPDATE, SERVER_REJECTION} from "./SessionError";
 import {
     CLIENT_GAME_UPDATE_CHOSEN_SQUARE_NUMBER,
     CLIENT_GAME_UPDATE_CHOSEN_SQUARE_VALUE,
-    CLIENT_MESSAGE_NEW_MESSAGE
+    CLIENT_GAME_UPDATE_GAME_CHANGED,
+    CLIENT_MESSAGE_PLAYER_MESSAGE
 } from "../api/message/Client";
 import {
+    SERVER_GAME_OPPONENT_RECEIVED_GAME_STATUS_CHANGE_CONFIRMATION,
+    SERVER_GAME_UPDATE_GAME_CHANGED,
     SERVER_GAME_UPDATE_GAME_ENDED,
     SERVER_GAME_UPDATE_GAME_STARTED,
-    SERVER_GAME_UPDATE_STATUS,
-    SERVER_MESSAGE_CLIENT_RECEIVED_GAME_STATUS_CHANGE_CONFIRMATION,
-    SERVER_MESSAGE_CLIENT_RECEIVED_MESSAGE_CONFIRMATION,
-    SERVER_MESSAGE_NEW_MESSAGE,
+    SERVER_MESSAGE_OPPONENT_MESSAGE,
     SERVER_SESSION_STATUS_UPDATE_HEARTBEAT,
     SERVER_SESSION_STATUS_UPDATE_PAIRED_SESSION_DISCONNECTED,
     SERVER_SESSION_STATUS_UPDATE_SESSION_REJECTED
@@ -50,11 +44,11 @@ const Game = () => {
     const isFirstPlayer = useRef<boolean>();
     const playerSquareValue = useRef<string>('');
     const opponentSquareValue = useRef<string>('')
+    const lastMarkedSquareNumber = useRef<number>(-1)
     const [gameStatus, setGameStatus] = useState<string>("Game started. Good luck!")
     const turnStatus = isPlayerTurn ? "Your turn, choose the square" : "Your opponent turn, please wait...";
 
-    const hasPairedSessionReceivedTheMessage = useRef<boolean>();
-    const hasPairedSessionReceivedTheGameUpdate = useRef<boolean>()
+    const hasOpponentReceivedTheGameUpdate = useRef<boolean>()
 
     const navigateTo = useNavigate();
 
@@ -77,32 +71,30 @@ const Game = () => {
             let json = JSON.parse(event.data)
 
             switch (true) {
-                case !!json[SERVER_MESSAGE_NEW_MESSAGE]:
-                    sendMessageReceivedConfirmation(sockJS);
-                    setReceivedMessage(json[SERVER_MESSAGE_NEW_MESSAGE]);
+                case !!json[SERVER_MESSAGE_OPPONENT_MESSAGE]:
+                    setReceivedMessage(json[SERVER_MESSAGE_OPPONENT_MESSAGE]);
                     break;
                 case !!json[SERVER_GAME_UPDATE_GAME_STARTED]:
                     setIsOpponentFound(true);
                     determineOrder(json[SERVER_GAME_UPDATE_GAME_STARTED]);
                     break;
-                case !!json[SERVER_GAME_UPDATE_STATUS]:
-                    sendReceivedGameStatusUpdateConfirmation(sockJS);
-                    updateGameBoard(json[SERVER_GAME_UPDATE_STATUS]);
+                case !!json[SERVER_GAME_UPDATE_GAME_CHANGED]:
+                    let opponentChosenSquareNumber = json[SERVER_GAME_UPDATE_GAME_CHANGED]
+                    sendReceivedGameStatusUpdateConfirmation(sockJS, opponentSquareValue.current, opponentChosenSquareNumber);
+                    updateGameBoard(opponentChosenSquareNumber);
+                    break;
+                case !!json[SERVER_GAME_OPPONENT_RECEIVED_GAME_STATUS_CHANGE_CONFIRMATION]:
+                    hasOpponentReceivedTheGameUpdate.current = true;
                     break;
                 case !!json[SERVER_GAME_UPDATE_GAME_ENDED]:
                     handleGameEnd(json[SERVER_GAME_UPDATE_GAME_ENDED]);
-                    break;
-                case !!json[SERVER_MESSAGE_CLIENT_RECEIVED_MESSAGE_CONFIRMATION]:
-                    hasPairedSessionReceivedTheMessage.current = true;
-                    break;
-                case !!json[SERVER_MESSAGE_CLIENT_RECEIVED_GAME_STATUS_CHANGE_CONFIRMATION]:
-                    hasPairedSessionReceivedTheGameUpdate.current = true;
                     break;
                 case !!json[SERVER_SESSION_STATUS_UPDATE_HEARTBEAT]:
                     heartbeatCheckingTimerId = resetTimer(heartbeatCheckingTimerId, sockJS);
                     break;
                 case !!json[SERVER_SESSION_STATUS_UPDATE_PAIRED_SESSION_DISCONNECTED]:
                     closeClientSocket(sockJS, OPPONENT_DISCONNECTED);
+                    alert(OPPONENT_DISCONNECTED)
                     break;
                 case !!json[SERVER_SESSION_STATUS_UPDATE_SESSION_REJECTED]:
                     closeClientSocket(sockJS, SERVER_REJECTION);
@@ -133,6 +125,8 @@ const Game = () => {
         }
 
         return () => {
+            clearInterval(heartbeatSendingTimerId)
+            clearInterval(heartbeatCheckingTimerId)
             if (sockJS) {
                 sockJS.close();
             }
@@ -142,25 +136,32 @@ const Game = () => {
     const handleSendMessage = () => {
         if (socket && message.trim() !== "") {
             socket.send(JSON.stringify({
-                [CLIENT_MESSAGE_NEW_MESSAGE]: message
+                [CLIENT_MESSAGE_PLAYER_MESSAGE]: message
             }));
             setMessage("");
         }
-        ensureMessageReachedPairedSession();
+
+        // In opposition to sending update game status there is no checking whether the message reached the opponent
+        // it's not as critical thing as the game status. If such feature would have to be implemented then for each sent
+        // message separate timer has to be created in which there will be checking whether message reached the opponent.
+        // In case of failure show then: 1. show the player which message didn't reach the second player, 2. apply retry policy.
     };
 
     const sendUpdatedGameStatus = (squareNumber: number, squareValue: string) => {
         socket?.send(JSON.stringify({
+            [CLIENT_GAME_UPDATE_GAME_CHANGED]: "",
             [CLIENT_GAME_UPDATE_CHOSEN_SQUARE_NUMBER]: String(squareNumber),
             [CLIENT_GAME_UPDATE_CHOSEN_SQUARE_VALUE]: squareValue
         }));
-        ensureGameStatusUpdateReachedPairedSession();
+        ensureGameStatusUpdateReachedOpponent();
     }
 
     const handleSquareClick = (squareNumber: number) => {
         if (!isPlayerTurn || squares[squareNumber]) {
             return;
         }
+
+        lastMarkedSquareNumber.current = squareNumber;
 
         const newSquares = squares.slice();
         newSquares[squareNumber] = playerSquareValue.current;
@@ -205,40 +206,33 @@ const Game = () => {
         setIsPlayerTurn(false);
     }
 
-    const ensureMessageReachedPairedSession = () => {
-        hasPairedSessionReceivedTheMessage.current = false;
+    const ensureGameStatusUpdateReachedOpponent = () => {
+        hasOpponentReceivedTheGameUpdate.current = false;
         const secondIntervalId = setInterval(() => {
-            if (hasPairedSessionReceivedTheMessage.current) {
+            if (hasOpponentReceivedTheGameUpdate.current) {
                 clearInterval(secondIntervalId);
                 clearInterval(finalCheckIntervalId);
+                lastMarkedSquareNumber.current = -1;
             }
         }, CONFIRMATION_RECEIVED_CHECKING_INTERVAL);
 
         let finalCheckIntervalId = setTimeout(() => {
-            // situation when message didn't arrive the paired session is not as serious as when there is
-            // no game status received, player can still send the message again, game is not finished
-            clearInterval(secondIntervalId);
-            alert(PAIRED_SESSION_DIDNT_RECEIVE_MESSAGE);
-        }, CONFIRMATION_RECEIVED_CHECKING_TOTAL);
-    }
+            // When paired session didn't receive the game status change it restores previous
+            // board state allowing the player to choose square again. It's safe because
+            // the game status is not saved in the server side (it is done only after
+            // confirmation of receiving the information from the opponent).
+            // Possible improvements: apply retry policy in case of failures.
 
-    const ensureGameStatusUpdateReachedPairedSession = () => {
-        hasPairedSessionReceivedTheGameUpdate.current = false;
-        const secondIntervalId = setInterval(() => {
-            if (hasPairedSessionReceivedTheGameUpdate.current) {
-                clearInterval(secondIntervalId);
-                clearInterval(finalCheckIntervalId);
-            }
-        }, CONFIRMATION_RECEIVED_CHECKING_INTERVAL);
+            setSquares((prevSquares) => {
+                const newSquares = [...prevSquares];
+                newSquares[lastMarkedSquareNumber.current] = null;
+                return newSquares;
+            });
 
-        let finalCheckIntervalId = setTimeout(() => {
-            // When paired session didn't receive the game status change situation is so serious that game needs to be finished,
-            // otherwise it would be needed to track the game status and f.e. allow player to set the square again.
-            // But then it can choose another one, and we have a conflict in game server, so for now the game is finished
-            // and player is redirected to lobby page. Better handling can be implemented in the future if needed.
+            setIsPlayerTurn(true)
+
             clearInterval(secondIntervalId);
             alert(PAIRED_SESSION_DIDNT_RECEIVE_GAME_STATUS_UPDATE);
-            navigateTo(Path.LobbyPath);
         }, CONFIRMATION_RECEIVED_CHECKING_TOTAL);
     }
 
