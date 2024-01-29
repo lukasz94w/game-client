@@ -22,7 +22,7 @@ const Login = () => {
     };
 
     return (
-        <div className="main">
+        <div className="main-login">
             <h1>Sign In</h1>
             <label htmlFor="username">Username:</label>
             <input
@@ -31,6 +31,7 @@ const Login = () => {
                 name="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                placeholder="login"
             />
             <label htmlFor="password">Password:</label>
             <input
@@ -39,9 +40,10 @@ const Login = () => {
                 name="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="password"
             />
             <button
-                className="btn-connect"
+                className="btn-login"
                 onClick={handleLogin}>
                 Login
             </button>

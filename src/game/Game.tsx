@@ -35,8 +35,10 @@ import {FIRST_PLAYER_SQUARE_VALUE, SECOND_PLAYER_SQUARE_VALUE} from "./GameVaria
 
 const Game = () => {
     const [socket, setSocket] = useState<WebSocket | null>(null);
-    const [message, setMessage] = useState('');
-    const [receivedMessage, setReceivedMessage] = useState('');
+
+    const [chatContent, setChatContent] = useState<string[]>([]);
+    const [currentMessage, setCurrentMessage] = useState('');
+    const chatContentRef = useRef<HTMLDivElement>(null);
 
     const [squares, setSquares] = useState(Array(9).fill(null));
     const [isPlayerTurn, setIsPlayerTurn] = useState<boolean>();
@@ -47,13 +49,11 @@ const Game = () => {
     const lastMarkedSquareNumber = useRef<number>(-1)
     const [gameStatus, setGameStatus] = useState<string>("Game started. Good luck!")
     const turnStatus = isPlayerTurn ? "Your turn, choose the square" : "Your opponent turn, please wait...";
-
     const hasOpponentReceivedTheGameUpdate = useRef<boolean>()
-
-    const navigateTo = useNavigate();
-
     const CONFIRMATION_RECEIVED_CHECKING_INTERVAL = 1000;
     const CONFIRMATION_RECEIVED_CHECKING_TOTAL = 30000;
+
+    const navigateTo = useNavigate();
 
     useEffect(() => {
         let heartbeatSendingTimerId: NodeJS.Timer
@@ -72,7 +72,7 @@ const Game = () => {
 
             switch (true) {
                 case !!json[SERVER_MESSAGE_OPPONENT_MESSAGE]:
-                    setReceivedMessage(json[SERVER_MESSAGE_OPPONENT_MESSAGE]);
+                    updateChatContent(`Opponent: ${json[SERVER_MESSAGE_OPPONENT_MESSAGE]}`);
                     break;
                 case !!json[SERVER_GAME_UPDATE_GAME_STARTED]:
                     setIsOpponentFound(true);
@@ -133,12 +133,13 @@ const Game = () => {
         };
     }, [navigateTo]);
 
-    const handleSendMessage = () => {
-        if (socket && message.trim() !== "") {
+    const handleSendChat = () => {
+        if (socket && currentMessage.trim() !== "") {
             socket.send(JSON.stringify({
-                [CLIENT_MESSAGE_PLAYER_MESSAGE]: message
+                [CLIENT_MESSAGE_PLAYER_MESSAGE]: currentMessage
             }));
-            setMessage("");
+            setCurrentMessage("");
+            updateChatContent(`You: ${currentMessage}`);
         }
 
         // In opposition to sending update game status there is no checking whether the message reached the opponent
@@ -236,6 +237,19 @@ const Game = () => {
         }, CONFIRMATION_RECEIVED_CHECKING_TOTAL);
     }
 
+    const updateChatContent = (message: string) => {
+        setChatContent((prevContent) => [...prevContent, message]);
+        scrollToTheLatestMessage()
+    };
+
+    const scrollToTheLatestMessage = () => {
+        setTimeout(() => {
+            if (chatContentRef.current) {
+                chatContentRef.current.scrollTop = chatContentRef.current.scrollHeight;
+            }
+        }, 10); // small timeout is needed to make the scroll function work properly
+    }
+
     return (
         socket === null ?
 
@@ -273,20 +287,32 @@ const Game = () => {
                             </div>
                             <div className="status">{turnStatus}</div>
 
-                            <input
-                                className="websocket-input"
-                                type="text"
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                                placeholder="Enter message"/>
-                            <button onClick={handleSendMessage}>Send</button>
-                            <div>
-                                <h2>Received Message:</h2>
-                                <p>{receivedMessage}</p>
-                            </div>
                             <Link to={Path.LobbyPath}>
-                                <button className="btn-connect">Finish the game</button>
+                                <button className="finish-game-button">Leave the game</button>
                             </Link>
+
+                            <div className="chat-panel">
+                                <div className="chat-content" ref={chatContentRef}>
+                                    <div className="chat-title">Chat:</div>
+                                    {chatContent.map((message, index) => (
+                                        <p key={index}>{message}</p>
+                                    ))}
+                                </div>
+                                <div className="chat-input">
+                                    <input
+                                        type="text"
+                                        value={currentMessage}
+                                        onChange={(e) => setCurrentMessage(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                handleSendChat();
+                                            }
+                                        }}
+                                        placeholder="Type your message"
+                                    />
+                                    <button onClick={handleSendChat}>Send</button>
+                                </div>
+                            </div>
                         </div>
 
                     )

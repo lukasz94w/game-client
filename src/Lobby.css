@@ -1,4 +1,4 @@
-.main {
+.main-lobby {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -6,7 +6,27 @@
     height: 100vh;
 }
 
-.btn-connect {
-    margin-top: 20px;
-    transform: scale(1.2);
+.btn-start {
+    padding: 19px;
+    background-color: #007bff;
+    color: #000000;
+    border: none;
+    cursor: pointer;
+    width: 240px;
+    display: block;
+    margin: 20px auto;
+    border-radius: 7px;
+    font-size: 19px;
+}
+
+.btn-start:hover {
+    background-color: #0056b3;
+}
+
+.link {
+    text-decoration: none;
+}
+
+h2 {
+    font-weight: normal;
 }

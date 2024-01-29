@@ -1,47 +1,49 @@
-.main {
+.main-login {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100vh;
+    margin-top: auto;
+    margin-bottom: 0;
 }
 
 h1 {
-    font-size: 2rem;
-    margin-bottom: 20px;
+    font-size: 2.925rem;
+    margin-bottom: 39px;
 }
 
 form {
     display: flex;
     flex-direction: column;
-    width: 300px;
+    width: 585px;
+    align-items: center;
 }
 
 label {
-    margin-bottom: 8px;
+    margin-bottom: 15.6px;
+    font-size: 20px;
 }
 
 input {
-    padding: 8px;
-    margin-bottom: 16px;
+    padding: 13px;
+    margin-bottom: 31.2px;
+    font-size: 17px;
 }
 
-.btn-connect {
-    padding: 10px;
+.btn-login {
+    padding: 19px;
     background-color: #007bff;
-    color: #fff;
+    color: #000000;
     border: none;
     cursor: pointer;
-    width: 150px;
+    width: 240px;
     display: block;
-    margin: 0 auto;
+    margin: 20px auto;
+    border-radius: 7px;
+    font-size: 19px;
 }
 
-.btn-connect:hover {
-    background-color: #0056b3;
-}
-
-
-.btn-connect:hover {
+.btn-login:hover {
     background-color: #0056b3;
 }
