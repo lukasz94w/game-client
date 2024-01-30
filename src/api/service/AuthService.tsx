@@ -15,7 +15,7 @@ const signOut = () => {
 }
 
 const verifySignedIn = () => {
-    return axiosInstance.get(AuthUrl.VerifySignedInUrl)
+    return axiosInstance.get(AuthUrl.VerifySessionActiveUrl)
 }
 
 const AuthService = {
