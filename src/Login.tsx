@@ -22,7 +22,12 @@ const Login = () => {
     };
 
     return (
-        <div className="main-login">
+        <div className="main-login"
+             onKeyDown={(e) => {
+                 if (e.key === 'Enter') {
+                     handleLogin()
+                 }
+             }}>
             <h1>Sign In</h1>
             <label htmlFor="username">Username:</label>
             <input
@@ -44,8 +49,8 @@ const Login = () => {
             />
             <button
                 className="btn-login"
-                onClick={handleLogin}>
-                Login
+                onClick={handleLogin}
+            >Login
             </button>
         </div>
     );
