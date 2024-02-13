@@ -1,8 +1,9 @@
 import {useNavigate} from "react-router-dom";
 import "./Login.css";
 import {useState} from "react";
-import authService from "./api/service/AuthService";
-import {Path} from "./commons/Path";
+import authService from "../api/service/AuthService";
+import {Path} from "../commons/Path";
+import userStorage from "../commons/UserStorage";
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -11,10 +12,11 @@ const Login = () => {
 
     const handleLogin = () => {
         authService.signIn(username, password)
-            .then(() => {
+            .then((response) => {
                 // after successful login browser automatically cache the cookie so there
                 // is no need to catch it from the request and storing it for example in session storage
                 navigateTo(Path.LobbyPath);
+                userStorage.saveUserName(response.data)
             })
             .catch(() => {
                 alert("Wrong credentials. Please try again.")

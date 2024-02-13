@@ -1,7 +1,7 @@
 import React from "react";
 import {Link} from "react-router-dom";
 import "./Lobby.css";
-import {Path} from "./commons/Path";
+import {Path} from "../commons/Path";
 
 const Lobby = () => {
     return (

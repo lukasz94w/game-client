@@ -3,7 +3,6 @@ import globalRouter from "../../router/GlobalRouter";
 import {Path} from "../../commons/Path";
 
 const axiosInstance = axios.create({
-    baseURL: 'http://localhost:8093/api/v1/',
     withCredentials: true, // causes to use authorization in the requests (f.e. Bearer token or session cookie if available)
     timeout: 5000,
 });
