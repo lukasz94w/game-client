@@ -11,8 +11,12 @@ import {
     resetTimer,
     sendReceivedGameStatusUpdateConfirmation,
     stopTimers
-} from "./SocketUtil";
-import {OPPONENT_DISCONNECTED, PAIRED_SESSION_DIDNT_RECEIVE_GAME_STATUS_UPDATE, SERVER_REJECTION} from "./SessionError";
+} from "./util/SocketUtil";
+import {
+    OPPONENT_DISCONNECTED,
+    PAIRED_SESSION_DIDNT_RECEIVE_GAME_STATUS_UPDATE,
+    SERVER_REJECTION
+} from "./util/SessionError";
 import {
     CLIENT_GAME_UPDATE_CHOSEN_SQUARE_NUMBER,
     CLIENT_GAME_UPDATE_CHOSEN_SQUARE_VALUE,
@@ -31,7 +35,8 @@ import {
 } from "../api/message/Server";
 import {FIRST_PLAYER_WON, SECOND_PLAYER_WON, UNRESOLVED} from "./message/GameResult";
 import {FIRST_PLAYER_ORDER} from "./message/GameOrder";
-import {FIRST_PLAYER_SQUARE_VALUE, SECOND_PLAYER_SQUARE_VALUE} from "./GameVariables";
+import {FIRST_PLAYER_SQUARE_VALUE, SECOND_PLAYER_SQUARE_VALUE} from "./util/GameVariables";
+import {GameServerUrl} from "../commons/GameServerUrl";
 
 const Game = () => {
     const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -47,7 +52,6 @@ const Game = () => {
     const playerSquareValue = useRef<string>('');
     const opponentSquareValue = useRef<string>('')
     const lastMarkedSquareNumber = useRef<number>(-1)
-    const [gameStatus, setGameStatus] = useState<string>("Game started. Good luck!")
     const turnStatus = isPlayerTurn ? "Your turn, choose the square" : "Your opponent turn, please wait...";
     const hasOpponentReceivedTheGameUpdate = useRef<boolean>()
     const CONFIRMATION_RECEIVED_CHECKING_INTERVAL = 1000;
@@ -59,7 +63,7 @@ const Game = () => {
         let heartbeatSendingTimerId: NodeJS.Timer
         let heartbeatCheckingTimerId: NodeJS.Timer;
 
-        const sockJS = new SockJS('http://localhost:8092/websocket'); // TODO: move to env variables
+        const sockJS = new SockJS(GameServerUrl.WebSocketUrl);
 
         sockJS.onopen = () => {
             setSocket(sockJS);
@@ -125,8 +129,7 @@ const Game = () => {
         }
 
         return () => {
-            clearInterval(heartbeatSendingTimerId)
-            clearInterval(heartbeatCheckingTimerId)
+            stopTimers(heartbeatSendingTimerId, heartbeatCheckingTimerId)
             if (sockJS) {
                 sockJS.close();
             }
@@ -198,13 +201,13 @@ const Game = () => {
 
     const handleGameEnd = (gameResult: string) => {
         if ((gameResult === FIRST_PLAYER_WON && isFirstPlayer.current) || (gameResult === SECOND_PLAYER_WON && !isFirstPlayer.current)) {
-            setGameStatus("Congratulations you won!")
+            alert("Congratulations you won! You will be redirected to lobby");
         } else if (gameResult === UNRESOLVED) {
-            setGameStatus("Draw.")
+            alert("Draw. You will be redirected to lobby");
         } else {
-            setGameStatus("You lost :(")
+            alert("You lost :(. You will be redirected to lobby");
         }
-        setIsPlayerTurn(false);
+        navigateTo(Path.LobbyPath);
     }
 
     const ensureGameStatusUpdateReachedOpponent = () => {
@@ -267,7 +270,7 @@ const Game = () => {
 
                     (
                         <div className="websocket-container">
-                            <h1>{gameStatus}</h1>
+                            <h1>Game started. Good luck!</h1>
                             <div className={`board-container ${isPlayerTurn ? 'player-turn' : ''}`}>
                                 <div className="board-row">
                                     <Square value={squares[0]} onClick={() => handleSquareClick(0)}/>

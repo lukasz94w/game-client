@@ -1,7 +1,7 @@
-const AuthUrlPrefix = "auth/";
+const AuthBaseUrl = "http://localhost:8093/api/v1/auth/";
 
 export const AuthUrl = {
-    SignInUrl: AuthUrlPrefix + "signIn",
-    SignOutUrl: AuthUrlPrefix + "signOut",
-    VerifySessionActiveUrl: AuthUrlPrefix + "verifySessionActive"
+    SignInUrl: AuthBaseUrl + "signIn",
+    SignOutUrl: AuthBaseUrl + "signOut",
+    VerifySessionActiveUrl: AuthBaseUrl + "verifySessionActive"
 } as const;

@@ -1,5 +1,5 @@
 import {AuthUrl} from "../../commons/AuthUrl";
-import axiosInstance from "./AxiosInstance";
+import axiosInstance from "../interceptor/AxiosInstance";
 
 const signIn = (username: string, password: string) => {
     return axiosInstance.get(AuthUrl.SignInUrl, {
