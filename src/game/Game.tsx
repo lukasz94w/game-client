@@ -56,6 +56,7 @@ const Game = () => {
     const hasOpponentReceivedTheGameUpdate = useRef<boolean>()
     const CONFIRMATION_RECEIVED_CHECKING_INTERVAL = 1000;
     const CONFIRMATION_RECEIVED_CHECKING_TOTAL = 30000;
+    const showOpponentDisconnectedAlert = useRef(true);
 
     const navigateTo = useNavigate();
 
@@ -98,7 +99,9 @@ const Game = () => {
                     break;
                 case !!json[SERVER_SESSION_STATUS_UPDATE_PAIRED_SESSION_DISCONNECTED]:
                     closeClientSocket(sockJS, OPPONENT_DISCONNECTED);
-                    alert(OPPONENT_DISCONNECTED)
+                    if (showOpponentDisconnectedAlert.current) {
+                        alert(OPPONENT_DISCONNECTED)
+                    }
                     break;
                 case !!json[SERVER_SESSION_STATUS_UPDATE_SESSION_REJECTED]:
                     closeClientSocket(sockJS, SERVER_REJECTION);
@@ -200,6 +203,7 @@ const Game = () => {
     }
 
     const handleGameEnd = (gameResult: string) => {
+        showOpponentDisconnectedAlert.current = false;
         if ((gameResult === FIRST_PLAYER_WON && isFirstPlayer.current) || (gameResult === SECOND_PLAYER_WON && !isFirstPlayer.current)) {
             alert("Congratulations you won! You will be redirected to lobby");
         } else if (gameResult === UNRESOLVED) {
