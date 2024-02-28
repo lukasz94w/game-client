@@ -1,3 +1,3 @@
 export const GameServerUrl = {
-    WebSocketUrl: 'http://localhost:8092/websocket'
+    WebSocketUrl: 'http://localhost:8081/websocket'
 } as const;
