@@ -3,7 +3,7 @@ import SockJS from "sockjs-client";
 import "./Game.css";
 import {Link, useNavigate} from "react-router-dom";
 import {Path} from "../commons/Path";
-import Square from "./Square";
+import Square from "./square/Square";
 import {
     closeClientSocket,
     createHeartbeatCheckingTimer,
@@ -11,17 +11,17 @@ import {
     resetTimer,
     sendReceivedGameStatusUpdateConfirmation,
     stopTimers
-} from "./util/SocketUtil";
+} from "./SocketUtil";
 import {
     OPPONENT_DISCONNECTED,
     PAIRED_SESSION_DIDNT_RECEIVE_GAME_STATUS_UPDATE,
     SERVER_REJECTION
-} from "./util/SessionError";
-import {FIRST_PLAYER_WON, SECOND_PLAYER_WON, UNRESOLVED} from "./message/GameResult";
-import {FIRST_PLAYER_ORDER} from "./message/GameOrder";
-import {FIRST_PLAYER_SQUARE_VALUE, SECOND_PLAYER_SQUARE_VALUE} from "./util/GameVariables";
-import {GameServerUrl} from "../commons/GameServerUrl";
-import {DATA, MESSAGE_TYPE} from "../api/json/common/JsonKey";
+} from "./constants/SessionErrorMessages";
+import {FIRST_PLAYER_WON, SECOND_PLAYER_WON, UNRESOLVED} from "./message/incoming/GameResult";
+import {FIRST_PLAYER_ORDER} from "./message/incoming/GameOrder";
+import {FIRST_PLAYER_SQUARE_VALUE, SECOND_PLAYER_SQUARE_VALUE} from "./constants/GameVariables";
+import {GameServerUrl} from "../api/url/websocket/GameServerUrl";
+import {DATA, MESSAGE_TYPE} from "./message/common/JsonKey";
 import {
     GAME_ENDED,
     GAME_STARTED,
@@ -31,8 +31,8 @@ import {
     OPPONENT_RECEIVED_GAME_UPDATE_CONFIRMATION,
     PAIRED_SESSION_DISCONNECTED,
     SESSION_REJECTED
-} from "../api/json/incoming/ServerMessageTypeValue";
-import {GAME_UPDATE, PLAYER_MESSAGE} from "../api/json/outgoing/ClientMessageTypeValue";
+} from "./message/incoming/ServerMessageTypeValue";
+import {GAME_UPDATE, PLAYER_MESSAGE} from "./message/outgoing/ClientMessageTypeValue";
 
 const Game = () => {
     const [socket, setSocket] = useState<WebSocket | null>(null);

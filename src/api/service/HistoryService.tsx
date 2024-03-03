@@ -1,8 +1,8 @@
-import axiosInstance from "../interceptor/AxiosInstance";
-import {HistoryUrl} from "../../commons/HistoryUrl";
+import axiosBaseInstance from "./AxiosBaseInstance";
+import {HistoryUrl} from "../url/http/HistoryUrl";
 
 const findGames = () => {
-    return axiosInstance.get(HistoryUrl.FindGamesUrl)
+    return axiosBaseInstance.get(HistoryUrl.FindGamesUrl)
 }
 
 const HistoryService = {
