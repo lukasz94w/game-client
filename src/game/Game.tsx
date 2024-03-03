@@ -17,26 +17,22 @@ import {
     PAIRED_SESSION_DIDNT_RECEIVE_GAME_STATUS_UPDATE,
     SERVER_REJECTION
 } from "./util/SessionError";
-import {
-    CLIENT_GAME_UPDATE_CHOSEN_SQUARE_NUMBER,
-    CLIENT_GAME_UPDATE_CHOSEN_SQUARE_VALUE,
-    CLIENT_GAME_UPDATE_GAME_CHANGED,
-    CLIENT_MESSAGE_PLAYER_MESSAGE
-} from "../api/message/Client";
-import {
-    SERVER_GAME_OPPONENT_RECEIVED_GAME_STATUS_CHANGE_CONFIRMATION,
-    SERVER_GAME_UPDATE_GAME_CHANGED,
-    SERVER_GAME_UPDATE_GAME_ENDED,
-    SERVER_GAME_UPDATE_GAME_STARTED,
-    SERVER_MESSAGE_OPPONENT_MESSAGE,
-    SERVER_SESSION_STATUS_UPDATE_HEARTBEAT,
-    SERVER_SESSION_STATUS_UPDATE_PAIRED_SESSION_DISCONNECTED,
-    SERVER_SESSION_STATUS_UPDATE_SESSION_REJECTED
-} from "../api/message/Server";
 import {FIRST_PLAYER_WON, SECOND_PLAYER_WON, UNRESOLVED} from "./message/GameResult";
 import {FIRST_PLAYER_ORDER} from "./message/GameOrder";
 import {FIRST_PLAYER_SQUARE_VALUE, SECOND_PLAYER_SQUARE_VALUE} from "./util/GameVariables";
 import {GameServerUrl} from "../commons/GameServerUrl";
+import {DATA, MESSAGE_TYPE} from "../api/json/common/JsonKey";
+import {
+    GAME_ENDED,
+    GAME_STARTED,
+    GAME_UPDATED,
+    HEARTBEAT_RECEIVED_CONFIRMATION,
+    OPPONENT_MESSAGE,
+    OPPONENT_RECEIVED_GAME_UPDATE_CONFIRMATION,
+    PAIRED_SESSION_DISCONNECTED,
+    SESSION_REJECTED
+} from "../api/json/incoming/ServerMessageTypeValue";
+import {GAME_UPDATE, PLAYER_MESSAGE} from "../api/json/outgoing/ClientMessageTypeValue";
 
 const Game = () => {
     const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -73,42 +69,46 @@ const Game = () => {
         };
 
         sockJS.onmessage = (event: any) => {
-            let json = JSON.parse(event.data)
+            let jsonMessage = JSON.parse(event.data)
+            let messageType = jsonMessage[MESSAGE_TYPE];
 
-            switch (true) {
-                case !!json[SERVER_MESSAGE_OPPONENT_MESSAGE]:
-                    updateChatContent(`Opponent: ${json[SERVER_MESSAGE_OPPONENT_MESSAGE]}`);
+            switch (messageType) {
+                case OPPONENT_MESSAGE:
+                    let message = jsonMessage[DATA];
+                    updateChatContent(`Opponent: ${message}`);
                     break;
-                case !!json[SERVER_GAME_UPDATE_GAME_STARTED]:
+                case GAME_STARTED:
                     setIsOpponentFound(true);
-                    determineOrder(json[SERVER_GAME_UPDATE_GAME_STARTED]);
-                    break;
-                case !!json[SERVER_GAME_UPDATE_GAME_CHANGED]:
-                    let opponentChosenSquareNumber = json[SERVER_GAME_UPDATE_GAME_CHANGED]
+                    let gameOrder = jsonMessage[DATA];
+                    setGameOrder(gameOrder);
+                    break
+                case GAME_UPDATED:
+                    let opponentChosenSquareNumber = jsonMessage[DATA]
                     sendReceivedGameStatusUpdateConfirmation(sockJS, opponentSquareValue.current, opponentChosenSquareNumber);
                     updateGameBoard(opponentChosenSquareNumber);
                     break;
-                case !!json[SERVER_GAME_OPPONENT_RECEIVED_GAME_STATUS_CHANGE_CONFIRMATION]:
+                case OPPONENT_RECEIVED_GAME_UPDATE_CONFIRMATION:
                     hasOpponentReceivedTheGameUpdate.current = true;
                     break;
-                case !!json[SERVER_GAME_UPDATE_GAME_ENDED]:
-                    handleGameEnd(json[SERVER_GAME_UPDATE_GAME_ENDED]);
+                case GAME_ENDED:
+                    let gameResult = jsonMessage[DATA]
+                    handleGameEnd(gameResult);
                     break;
-                case !!json[SERVER_SESSION_STATUS_UPDATE_HEARTBEAT]:
+                case HEARTBEAT_RECEIVED_CONFIRMATION:
+                    console.log("Server confirmed receiving heartbeat")
                     heartbeatCheckingTimerId = resetTimer(heartbeatCheckingTimerId, sockJS);
                     break;
-                case !!json[SERVER_SESSION_STATUS_UPDATE_PAIRED_SESSION_DISCONNECTED]:
+                case PAIRED_SESSION_DISCONNECTED:
                     closeClientSocket(sockJS, OPPONENT_DISCONNECTED);
                     if (showOpponentDisconnectedAlert.current) {
                         alert(OPPONENT_DISCONNECTED)
                     }
                     break;
-                case !!json[SERVER_SESSION_STATUS_UPDATE_SESSION_REJECTED]:
+                case SESSION_REJECTED:
                     closeClientSocket(sockJS, SERVER_REJECTION);
                     break;
                 default:
-                    console.log("Unknown type of message:", json);
-                    break;
+                    console.log("Unknown type of message:", jsonMessage);
             }
         };
 
@@ -142,7 +142,8 @@ const Game = () => {
     const handleSendChat = () => {
         if (socket && currentMessage.trim() !== "") {
             socket.send(JSON.stringify({
-                [CLIENT_MESSAGE_PLAYER_MESSAGE]: currentMessage
+                [MESSAGE_TYPE]: PLAYER_MESSAGE,
+                [DATA]: currentMessage
             }));
             setCurrentMessage("");
             updateChatContent(`You: ${currentMessage}`);
@@ -154,11 +155,10 @@ const Game = () => {
         // In case of failure show then: 1. show the player which message didn't reach the second player, 2. apply retry policy.
     };
 
-    const sendUpdatedGameStatus = (squareNumber: number, squareValue: string) => {
+    const sendUpdatedGameStatus = (squareNumber: number) => {
         socket?.send(JSON.stringify({
-            [CLIENT_GAME_UPDATE_GAME_CHANGED]: "",
-            [CLIENT_GAME_UPDATE_CHOSEN_SQUARE_NUMBER]: String(squareNumber),
-            [CLIENT_GAME_UPDATE_CHOSEN_SQUARE_VALUE]: squareValue
+            [MESSAGE_TYPE]: GAME_UPDATE,
+            [DATA]: String(squareNumber)
         }));
         ensureGameStatusUpdateReachedOpponent();
     }
@@ -175,10 +175,10 @@ const Game = () => {
         setSquares(newSquares);
 
         setIsPlayerTurn(false);
-        sendUpdatedGameStatus(squareNumber, playerSquareValue.current)
+        sendUpdatedGameStatus(squareNumber)
     };
 
-    const determineOrder = (orderMsg: string) => {
+    const setGameOrder = (orderMsg: string) => {
         if (orderMsg === FIRST_PLAYER_ORDER) {
             isFirstPlayer.current = true;
             playerSquareValue.current = FIRST_PLAYER_SQUARE_VALUE
