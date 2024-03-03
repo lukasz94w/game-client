@@ -1,8 +1,8 @@
-import {AuthUrl} from "../../commons/AuthUrl";
-import axiosInstance from "../interceptor/AxiosInstance";
+import {AuthUrl} from "../url/http/AuthUrl";
+import axiosBaseInstance from "./AxiosBaseInstance";
 
 const signIn = (username: string, password: string) => {
-    return axiosInstance.get(AuthUrl.SignInUrl, {
+    return axiosBaseInstance.get(AuthUrl.SignInUrl, {
         auth: {
             username: username,
             password: password
@@ -11,11 +11,11 @@ const signIn = (username: string, password: string) => {
 };
 
 const signOut = () => {
-    return axiosInstance.get(AuthUrl.SignOutUrl)
+    return axiosBaseInstance.get(AuthUrl.SignOutUrl)
 }
 
 const verifySignedIn = () => {
-    return axiosInstance.get(AuthUrl.VerifySessionActiveUrl)
+    return axiosBaseInstance.get(AuthUrl.VerifySessionActiveUrl)
 }
 
 const AuthService = {

@@ -1,6 +1,6 @@
-import {LOST_CONNECTION_TO_SERVER} from "./SessionError";
-import {DATA, MESSAGE_TYPE} from "../../api/json/common/JsonKey";
-import {HEARTBEAT, PLAYER_RECEIVED_GAME_UPDATE_CONFIRMATION} from "../../api/json/outgoing/ClientMessageTypeValue";
+import {LOST_CONNECTION_TO_SERVER} from "./constants/SessionErrorMessages";
+import {DATA, MESSAGE_TYPE} from "./message/common/JsonKey";
+import {HEARTBEAT, PLAYER_RECEIVED_GAME_UPDATE_CONFIRMATION} from "./message/outgoing/ClientMessageTypeValue";
 
 const HEARTBEAT_FREQUENCY = 60000;
 const HEARTBEAT_CHECKING_FREQUENCY = 75000;
