@@ -37,7 +37,7 @@ const AuthNavbar = () => {
     // Here is request send to one of such endpoints.
     const refreshSessionPeriodically = () => {
         return setInterval(() => {
-            authService.verifySignedIn();
+            authService.refreshSession();
         }, THIRTY_MINUTES_REFRESH_SESSION_INTERVAL)
     }
 
