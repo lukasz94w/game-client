@@ -14,14 +14,14 @@ const signOut = () => {
     return axiosBaseInstance.get(AuthUrl.SignOutUrl)
 }
 
-const verifySignedIn = () => {
-    return axiosBaseInstance.get(AuthUrl.VerifySessionActiveUrl)
+const refreshSession = () => {
+    return axiosBaseInstance.get(AuthUrl.RefreshSessionUrl)
 }
 
 const AuthService = {
     signIn,
     signOut,
-    verifySignedIn
+    refreshSession
 };
 
 export default AuthService;
