@@ -1,53 +1,35 @@
-# Getting Started with Create React App
+# game-client
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+The repository contains code of the client part of the game application. It's backend section can be found here: https://github.com/lukasz94w/game-server.
 
-## Available Scripts
+## Used technologies:
+- React
+- axios
+- sockjs-client
+- HTML
+- CSS
 
-In the project directory, you can run:
+## Running the application in the development mode:
 
-### `npm start`
+```
+npm-start
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Screenshots:
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+![sign-in](https://github.com/lukasz94w/game-client/assets/53697813/79bc8fa4-1458-4f89-9687-3e8a2c0913a9)
 
-### `npm test`
+![lobby](https://github.com/lukasz94w/game-client/assets/53697813/288ec49e-9072-42e3-a7fd-3b45fb2e97c5)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more
-information.
+![lobby 2](https://github.com/lukasz94w/game-client/assets/53697813/626221ab-3a5b-4e3a-a466-97dd7120c6d2)
 
-### `npm run build`
+![game](https://github.com/lukasz94w/game-client/assets/53697813/b3772327-1c93-4809-a7c5-757d0bb2ca81)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+![finished game](https://github.com/lukasz94w/game-client/assets/53697813/fcb73f6e-7083-418a-9c5e-b270f1f5edb0)
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+![results](https://github.com/lukasz94w/game-client/assets/53697813/2bc7ee0a-2122-4e03-aa75-c4b2ac014dc8)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will
-remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right
-into your project so you have full control over them. All of the commands except `eject` will still work, but they will
-point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you
-shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t
-customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in
-the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Impromevents:
+- dockerize the application so it will be ready for deployment,
+- add forms validation, reactive forms,
+- clean unused libraries.
